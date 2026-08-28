@@ -25,7 +25,7 @@
 - [x] Orders Grid & Infinite Scroll
 - [x] Favorite Circle Toggle
 - [x] Favorite Author Toggle
-- [ ] Wishlist Toggle
+- [x] Wishlist Toggle
 - [ ] Favorite Authors Infinite Scroll
 - [ ] Wishlist Infinite Scroll
 - [ ] VPN Link Handler
