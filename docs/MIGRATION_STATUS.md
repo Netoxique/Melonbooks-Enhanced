@@ -18,7 +18,7 @@
 - [x] Force Detail Thumbnails
 - [x] Cart Duplicate Warning
 - [x] Heading Translator
-- [ ] Product Info Layout
+- [x] Product Info Layout
 - [ ] Search Columns
 - [ ] Force Listing Images
 - [ ] Listing Hover

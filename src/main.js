@@ -6,12 +6,14 @@ import { runAt } from './core/lifecycle.js';
 import { ForceDetailThumbnailsModule } from './modules/force-detail-thumbnails.js';
 import { CartDuplicateWarningModule } from './modules/cart-duplicate-warning.js';
 import { HeadingTranslatorModule } from './modules/heading-translator.js';
+import { ProductInfoLayoutModule } from './modules/product-info-layout.js';
 
 // Module registry
 const modules = [
   ForceDetailThumbnailsModule,
   CartDuplicateWarningModule,
-  HeadingTranslatorModule
+  HeadingTranslatorModule,
+  ProductInfoLayoutModule
 ];
 
 function bootstrap() {
