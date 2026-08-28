@@ -19,7 +19,7 @@
 - [x] Cart Duplicate Warning
 - [x] Heading Translator
 - [x] Product Info Layout
-- [ ] Search Columns
+- [x] Search Columns
 - [ ] Force Listing Images
 - [ ] Listing Hover
 - [ ] Orders Grid & Infinite Scroll

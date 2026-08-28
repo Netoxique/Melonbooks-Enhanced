@@ -7,13 +7,15 @@ import { ForceDetailThumbnailsModule } from './modules/force-detail-thumbnails.j
 import { CartDuplicateWarningModule } from './modules/cart-duplicate-warning.js';
 import { HeadingTranslatorModule } from './modules/heading-translator.js';
 import { ProductInfoLayoutModule } from './modules/product-info-layout.js';
+import { SearchColumnsModule } from './modules/search-columns.js';
 
 // Module registry
 const modules = [
   ForceDetailThumbnailsModule,
   CartDuplicateWarningModule,
   HeadingTranslatorModule,
-  ProductInfoLayoutModule
+  ProductInfoLayoutModule,
+  SearchColumnsModule
 ];
 
 function bootstrap() {
