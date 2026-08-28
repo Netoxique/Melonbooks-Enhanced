@@ -1,6 +1,6 @@
 # Melonbooks Enhanced
 
-A unified, modular, high-performance userscript that consolidates 15 standalone enhancements for browsing, searching, ordering, and managing products on [Melonbooks](https://www.melonbooks.co.jp).
+A unified, modular, high-performance userscript that consolidates standalone enhancements for browsing, searching, ordering, and managing products on [Melonbooks](https://www.melonbooks.co.jp).
 
 ---
 
