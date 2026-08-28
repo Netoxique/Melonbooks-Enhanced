@@ -16,7 +16,6 @@ import { FavoriteAuthorToggleModule } from './modules/favorite-author-toggle.js'
 import { WishlistToggleModule } from './modules/wishlist-toggle.js';
 import { FavoriteAuthorsInfiniteScrollModule } from './modules/favorite-authors-infinite-scroll.js';
 import { WishlistInfiniteScrollModule } from './modules/wishlist-infinite-scroll.js';
-import { VpnLinkHandlerModule } from './modules/vpn-link-handler.js';
 
 // Module registry
 const modules = [
@@ -32,8 +31,7 @@ const modules = [
   FavoriteAuthorToggleModule,
   WishlistToggleModule,
   FavoriteAuthorsInfiniteScrollModule,
-  WishlistInfiniteScrollModule,
-  VpnLinkHandlerModule
+  WishlistInfiniteScrollModule
 ];
 
 function bootstrap() {
