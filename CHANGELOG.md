@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-08-28
+
+### Fixed
+- **Wishlist Infinite Scroll** now ignores Melonbooks' invisible `.item-list__placeholder` elements and inserts fetched products before them, allowing later pages to fill the remaining positions in the first page's final row.
+- Restricted wishlist item detection, duplicate tracking, and imports to actual product entries so layout placeholders are never treated as products.
+- Corrected the generated userscript namespace, author, update URL, and download URL to point to the current `Netoxique/Melonbooks-Enhanced` repository.
+
+---
+
 ## [1.0.0] - 2026-08-28
 
 ### Consolidated Release
