@@ -26,7 +26,7 @@
 - [x] Favorite Circle Toggle
 - [x] Favorite Author Toggle
 - [x] Wishlist Toggle
-- [ ] Favorite Authors Infinite Scroll
+- [x] Favorite Authors Infinite Scroll
 - [ ] Wishlist Infinite Scroll
 - [ ] VPN Link Handler
 
