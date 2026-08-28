@@ -24,7 +24,7 @@
 - [x] Listing Hover
 - [x] Orders Grid & Infinite Scroll
 - [x] Favorite Circle Toggle
-- [ ] Favorite Author Toggle
+- [x] Favorite Author Toggle
 - [ ] Wishlist Toggle
 - [ ] Favorite Authors Infinite Scroll
 - [ ] Wishlist Infinite Scroll
