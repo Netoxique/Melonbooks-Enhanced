@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxic/melonbooks-enhancements
-// @version      0.1.0
+// @version      0.2.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxic
 // @match        https://*.melonbooks.co.jp/*
@@ -29,7 +29,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxic/melonbooks-enhancements");
-  __publicField(ScriptInfo, "version", "0.1.0");
+  __publicField(ScriptInfo, "version", "0.2.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxic");
 
@@ -288,8 +288,28 @@
     }
   }
 
+  // src/modules/force-detail-thumbnails.js
+  var ForceDetailThumbnailsModule = {
+    id: "force-detail-thumbnails",
+    name: "Force Detail Thumbnails",
+    lifecycle: "document-end",
+    matches(context) {
+      return context.route === "melonbooks-product" || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
+    },
+    init() {
+      const images = document.querySelectorAll('img[src*="now_printing.jpeg"][data-src]');
+      for (const img of images) {
+        const originalSrc = img.getAttribute("data-src");
+        if (!originalSrc) continue;
+        img.setAttribute("src", originalSrc);
+      }
+    }
+  };
+
   // src/main.js
-  var modules = [];
+  var modules = [
+    ForceDetailThumbnailsModule
+  ];
   function bootstrap() {
     const context = createExecutionContext();
     const isDebug = Settings.isDebugEnabled();

@@ -3,9 +3,12 @@ import { Logger, withErrorBoundary } from './core/errors.js';
 import { Settings } from './core/storage.js';
 import { createExecutionContext } from './core/routing.js';
 import { runAt } from './core/lifecycle.js';
+import { ForceDetailThumbnailsModule } from './modules/force-detail-thumbnails.js';
 
 // Module registry
-const modules = [];
+const modules = [
+  ForceDetailThumbnailsModule
+];
 
 function bootstrap() {
   const context = createExecutionContext();
