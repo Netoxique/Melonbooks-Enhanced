@@ -2,12 +2,9 @@ name: Build & Verify
 
 on:
   push:
-    branches: [ main, automation/wishlist-concurrent-dedupe ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
-
-permissions:
-  contents: write
 
 jobs:
   build:
@@ -22,9 +19,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Synchronize package lock
-        run: npm install --package-lock-only --ignore-scripts
-
       - name: Install dependencies
         run: npm ci
 
@@ -36,17 +30,3 @@ jobs:
 
       - name: Verify build artifact is clean and in-sync
         run: npm run check
-
-      - name: Commit generated files on automation branch
-        if: github.ref == 'refs/heads/automation/wishlist-concurrent-dedupe'
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json "dist/Melonbooks - Enhancements.user.js"
-          if git diff --cached --quiet; then
-            echo "Generated files are already current."
-            exit 0
-          fi
-          git commit -m "Build Melonbooks Enhanced v1.0.2 [skip ci]"
-          git push
