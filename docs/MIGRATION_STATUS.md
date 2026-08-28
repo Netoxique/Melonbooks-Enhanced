@@ -22,7 +22,7 @@
 - [x] Search Columns
 - [x] Force Listing Images
 - [x] Listing Hover
-- [ ] Orders Grid & Infinite Scroll
+- [x] Orders Grid & Infinite Scroll
 - [ ] Favorite Circle Toggle
 - [ ] Favorite Author Toggle
 - [ ] Wishlist Toggle

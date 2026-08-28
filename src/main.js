@@ -10,6 +10,7 @@ import { ProductInfoLayoutModule } from './modules/product-info-layout.js';
 import { SearchColumnsModule } from './modules/search-columns.js';
 import { ForceListingImagesModule } from './modules/force-listing-images.js';
 import { ListingHoverModule } from './modules/listing-hover.js';
+import { OrdersGridInfiniteScrollModule } from './modules/orders-grid-infinite-scroll.js';
 
 // Module registry
 const modules = [
@@ -19,7 +20,8 @@ const modules = [
   ProductInfoLayoutModule,
   SearchColumnsModule,
   ForceListingImagesModule,
-  ListingHoverModule
+  ListingHoverModule,
+  OrdersGridInfiniteScrollModule
 ];
 
 function bootstrap() {
