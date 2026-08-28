@@ -20,7 +20,7 @@
 - [x] Heading Translator
 - [x] Product Info Layout
 - [x] Search Columns
-- [ ] Force Listing Images
+- [x] Force Listing Images
 - [ ] Listing Hover
 - [ ] Orders Grid & Infinite Scroll
 - [ ] Favorite Circle Toggle

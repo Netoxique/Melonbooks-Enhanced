@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxic/melonbooks-enhancements
-// @version      0.6.0
+// @version      0.7.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxic
 // @match        https://*.melonbooks.co.jp/*
@@ -29,7 +29,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxic/melonbooks-enhancements");
-  __publicField(ScriptInfo, "version", "0.6.0");
+  __publicField(ScriptInfo, "version", "0.7.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxic");
 
@@ -1148,13 +1148,145 @@
     }
   };
 
+  // src/modules/force-listing-images.js
+  var LOAD_SAMPLE_IMAGES = false;
+  var PRELOAD_CONCURRENCY = 6;
+  var PLACEHOLDER_PATTERNS = [
+    "now_printing.jpeg",
+    "now_printing.jpg",
+    "noimage"
+  ];
+  var ForceListingImagesModule = {
+    id: "force-listing-images",
+    name: "Force Load Listing Images",
+    lifecycle: "document-start",
+    matches(context) {
+      return context.isMelonbooks && !context.location.pathname.startsWith("/detail/");
+    },
+    init(context) {
+      const pendingPreloads = [];
+      let activePreloads = 0;
+      function isListingPage() {
+        if (context.location.pathname.startsWith("/detail/")) return false;
+        return Boolean(
+          document.querySelector(".item-list, .search-page, .ranking, .item-thumbnail, #rtoaster-template")
+        );
+      }
+      function decodeHtmlEntities(value) {
+        const textarea = document.createElement("textarea");
+        textarea.innerHTML = value;
+        return textarea.value;
+      }
+      function toAbsoluteUrl(url) {
+        if (!url) return "";
+        const decoded = decodeHtmlEntities(url.trim());
+        if (decoded.startsWith("//")) {
+          return context.location.protocol + decoded;
+        }
+        try {
+          return new URL(decoded, context.location.href).href;
+        } catch {
+          return decoded;
+        }
+      }
+      function looksLikePlaceholder(url) {
+        if (!url) return false;
+        return PLACEHOLDER_PATTERNS.some((pattern) => url.includes(pattern));
+      }
+      function shouldProcessImage(img) {
+        if (!(img instanceof HTMLImageElement)) return false;
+        const realSrc = img.getAttribute("data-src") || img.dataset.src;
+        if (!realSrc) return false;
+        if (LOAD_SAMPLE_IMAGES) return true;
+        return Boolean(
+          img.closest(".item-thumbnail") || img.classList.contains("lazyload_product")
+        );
+      }
+      function queuePreload(src) {
+        if (!src) return;
+        if (pendingPreloads.includes(src)) return;
+        pendingPreloads.push(src);
+        runPreloadQueue();
+      }
+      function runPreloadQueue() {
+        while (activePreloads < PRELOAD_CONCURRENCY && pendingPreloads.length > 0) {
+          const src = pendingPreloads.shift();
+          activePreloads += 1;
+          const image = new Image();
+          image.decoding = "async";
+          image.loading = "eager";
+          image.onload = image.onerror = function() {
+            activePreloads -= 1;
+            runPreloadQueue();
+          };
+          image.src = src;
+        }
+      }
+      function forceImage(img) {
+        if (!shouldProcessImage(img)) return;
+        const realSrc = toAbsoluteUrl(img.getAttribute("data-src") || img.dataset.src);
+        if (!realSrc) return;
+        img.loading = "eager";
+        img.decoding = "async";
+        img.fetchPriority = "high";
+        img.classList.remove("lazyload", "lazyloading");
+        img.classList.add("lazyloaded", "melon-force-loaded");
+        img.setAttribute("data-melon-force-src", realSrc);
+        const currentSrc = img.getAttribute("src") || "";
+        if (!currentSrc || looksLikePlaceholder(currentSrc) || currentSrc !== realSrc) {
+          img.src = realSrc;
+        }
+        queuePreload(realSrc);
+      }
+      function forceImages(root = document) {
+        if (!isListingPage()) return;
+        const selector = LOAD_SAMPLE_IMAGES ? "img[data-src], img[data-srcset], source[data-srcset]" : ".item-thumbnail img[data-src], img.lazyload_product[data-src]";
+        root.querySelectorAll(selector).forEach((node) => {
+          if (node instanceof HTMLImageElement) {
+            forceImage(node);
+          }
+        });
+      }
+      function watchForNewImages() {
+        const observer = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+              if (!(node instanceof Element)) continue;
+              if (node.matches && node.matches("img[data-src]")) {
+                forceImage(node);
+              }
+              forceImages(node);
+            }
+          }
+        });
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true
+        });
+      }
+      function start() {
+        forceImages();
+        watchForNewImages();
+        setTimeout(forceImages, 250);
+        setTimeout(forceImages, 1e3);
+        setTimeout(forceImages, 2500);
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, { once: true });
+      } else {
+        start();
+      }
+    }
+  };
+
   // src/main.js
   var modules = [
     ForceDetailThumbnailsModule,
     CartDuplicateWarningModule,
     HeadingTranslatorModule,
     ProductInfoLayoutModule,
-    SearchColumnsModule
+    SearchColumnsModule,
+    ForceListingImagesModule
   ];
   function bootstrap() {
     const context = createExecutionContext();
