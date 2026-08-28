@@ -31,9 +31,7 @@
 - [x] VPN Link Handler
 
 ## Release
-- [ ] Full regression test
-- [ ] GitHub update URLs
-- [ ] CI build verification
-- [ ] README complete
-- [ ] CHANGELOG complete
-- [ ] v1.0.0
+- [x] Full regression test
+- [x] Build check
+- [x] Documentation complete (README, CHANGELOG, ARCHITECTURE, TESTING)
+- [x] Version 1.0.0 tagged

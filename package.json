@@ -1,13 +1,13 @@
 {
   "name": "melonbooks-enhancements",
-  "version": "0.1.0",
-  "description": "Modular master userscript for Melonbooks enhancements",
+  "version": "1.0.0",
+  "description": "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.",
   "type": "module",
   "scripts": {
     "build": "node tools/build.mjs",
     "check": "node tools/build.mjs --check",
     "watch": "node tools/build.mjs --watch",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.mjs"
   },
   "keywords": [
     "userscript",

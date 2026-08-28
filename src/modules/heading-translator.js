@@ -5,7 +5,7 @@
 
 const HEADING_SELECTOR = '.section-find, .page-headline, .title-h2, h2.title';
 
-const TRANSLATIONS = new Map([
+export const TRANSLATIONS = new Map([
   /* Product page headings */
   ['作品情報', 'Product Information'],
   ['作品詳細', 'Product Details'],
@@ -80,11 +80,16 @@ const TRANSLATIONS = new Map([
   ['特集情報', 'Feature Information']
 ]);
 
-function normalizeText(text) {
+export function normalizeText(text) {
   return String(text || '')
     .replace(/\u00a0/g, ' ')
     .replace(/[ \t\r\n]+/g, ' ')
     .trim();
+}
+
+export function translateText(text) {
+  const norm = normalizeText(text);
+  return TRANSLATIONS.get(norm) || text;
 }
 
 function getTextNodes(root) {

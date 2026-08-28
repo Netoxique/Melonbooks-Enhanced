@@ -75,3 +75,28 @@ export function createExecutionContext(location = window.location) {
     isOutlook: isOutlook(location)
   };
 }
+
+export function classifyRoute(urlString) {
+  try {
+    const url = new URL(urlString);
+    const host = url.hostname.toLowerCase();
+    const isMelon = host === 'melonbooks.co.jp' || host.endsWith('.melonbooks.co.jp');
+    const isOut = host === 'outlook.office.com' || host === 'outlook.live.com';
+    const domain = isMelon ? 'melonbooks' : (isOut ? 'outlook' : 'unknown');
+    return {
+      domain,
+      route: getRoute(url),
+      isMelonbooks: isMelon,
+      isOutlook: isOut,
+      location: url
+    };
+  } catch {
+    return {
+      domain: 'unknown',
+      route: 'unknown',
+      isMelonbooks: false,
+      isOutlook: false
+    };
+  }
+}
+
