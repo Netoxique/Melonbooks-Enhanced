@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxic/melonbooks-enhancements
-// @version      0.3.0
+// @version      0.4.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxic
 // @match        https://*.melonbooks.co.jp/*
@@ -29,7 +29,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxic/melonbooks-enhancements");
-  __publicField(ScriptInfo, "version", "0.3.0");
+  __publicField(ScriptInfo, "version", "0.4.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxic");
 
@@ -475,10 +475,191 @@
     }
   };
 
+  // src/modules/heading-translator.js
+  var HEADING_SELECTOR = ".section-find, .page-headline, .title-h2, h2.title";
+  var TRANSLATIONS = /* @__PURE__ */ new Map([
+    /* Product page headings */
+    ["\u4F5C\u54C1\u60C5\u5831", "Product Information"],
+    ["\u4F5C\u54C1\u8A73\u7D30", "Product Details"],
+    ["\u7279\u5178\u60C5\u5831", "Bonus Information"],
+    ["\u30B5\u30FC\u30AF\u30EB(\u5148\u751F)\u304B\u3089\u306E\u30B3\u30E1\u30F3\u30C8/\u4F5C\u54C1\u8A73\u7D30", "Circle/Creator Comments and Product Details"],
+    ["\u30B9\u30BF\u30C3\u30D5\u306E\u30AA\u30B9\u30B9\u30E1\u30DD\u30A4\u30F3\u30C8", "Staff Recommendation"],
+    ["\u3053\u306E\u30EC\u30FC\u30D9\u30EB\u306E\u4ED6\u306E\u4F5C\u54C1", "Other Works from This Label"],
+    ["\u3053\u306E\u30B5\u30FC\u30AF\u30EB\u306E\u307B\u304B\u306E\u4F5C\u54C1", "Other Works from This Circle"],
+    ["\u95A2\u9023\u4F5C\u54C1", "Related Works"],
+    ["\u3088\u304F\u4E00\u7DD2\u306B\u8CB7\u308F\u308C\u3066\u3044\u308B\u5546\u54C1", "Frequently Bought Together"],
+    ["\u307B\u304B\u306E\u4EBA\u306F\u3053\u3093\u306A\u5546\u54C1\u3082\u30C1\u30A7\u30C3\u30AF\u3057\u3066\u3044\u307E\u3059", "Other Customers Also Checked"],
+    ["\u6700\u8FD1\u30C1\u30A7\u30C3\u30AF\u3057\u305F\u5546\u54C1", "Recently Viewed Items"],
+    ["\u5E97\u8217\u5728\u5EAB", "Store Inventory"],
+    ["\u5E97\u8217\u5728\u5EAB\u72B6\u6CC1", "Store Inventory Status"],
+    /* Front page .section-find headings */
+    ["\u30A4\u30F3\u30D5\u30A9\u30E1\u30FC\u30B7\u30E7\u30F3", "Information"],
+    ["\u30D5\u30A7\u30A2\u30FB\u30A4\u30D9\u30F3\u30C8\u60C5\u5831", "Fair & Event Information"],
+    ["\u30D4\u30C3\u30AF\u30A2\u30C3\u30D7", "Featured"],
+    ["\u7DCF\u5408\u4E88\u7D04\u30E9\u30F3\u30AD\u30F3\u30B0", "Overall Preorder Ranking"],
+    ["\u7DCF\u5408\u8CA9\u58F2\u30E9\u30F3\u30AD\u30F3\u30B0", "Overall Sales Ranking"],
+    ["\u540C\u4EBA\u95A2\u9023\u60C5\u5831", "Doujin Information"],
+    ["\u300E\u4E00\u822C\u540C\u4EBA\u8A8C\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "General Doujinshi Ranking"],
+    ["\u300E\u30AA\u30EA\u30B8\u30CA\u30EB\u540C\u4EBA\u8A8C\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Original Doujinshi Ranking"],
+    ["\u300E\u30B5\u30D6\u30AB\u30EB\u540C\u4EBA\u8A8C\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Subculture Doujinshi Ranking"],
+    ["\u300E\u6210\u5E74\u540C\u4EBA\u8A8C\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Adult Doujinshi Ranking"],
+    ["\u300E\u540C\u4EBA\u8A8C\u300F\u65B0\u7740\u4F5C\u54C1", "New Doujinshi Releases"],
+    ["\u300E\u540C\u4EBA\u30BD\u30D5\u30C8\u300F\u65B0\u7740\u4F5C\u54C1", "New Doujin Software Releases"],
+    ["\u300E\u540C\u4EBA\u30A2\u30A4\u30C6\u30E0\u300F\u65B0\u7740\u4F5C\u54C1", "New Doujin Item Releases"],
+    ["\u30B3\u30DF\u30C3\u30AF\u95A2\u9023\u60C5\u5831", "Comic Information"],
+    ["\u300E\u30B3\u30DF\u30C3\u30AF\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Comic Ranking"],
+    ["\u300E\u30CE\u30D9\u30EB\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Novel Ranking"],
+    ["\u300E\u96D1\u8A8C\u30E0\u30C3\u30AF\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Magazine/Mook Ranking"],
+    ["\u300E\u6210\u5E74\u30B3\u30DF\u30C3\u30AF\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Adult Comic Ranking"],
+    ["\u300E\u30B3\u30DF\u30C3\u30AF\u300F\u65B0\u7740", "New Comics"],
+    ["\u300E\u30CE\u30D9\u30EB\u300F\u65B0\u7740", "New Novels"],
+    ["\u300E\u96D1\u8A8C\u30E0\u30C3\u30AF\u300F\u65B0\u7740", "New Magazines/Mooks"],
+    ["\u300E\u6210\u5E74\u30B3\u30DF\u30C3\u30AF\u300F\u65B0\u7740", "New Adult Comics"],
+    ["\u300E\u30B2\u30FC\u30E0\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Game Ranking"],
+    ["\u300E\u30B2\u30FC\u30E0\u300F\u65B0\u7740\u4F5C\u54C1", "New Game Releases"],
+    ["\u30B0\u30C3\u30BA\u95A2\u9023\u60C5\u5831", "Goods Information"],
+    ["\u300E\u30B0\u30C3\u30BA\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Goods Ranking"],
+    ["\u300E\u30B0\u30C3\u30BA\u300F\u65B0\u7740\u4F5C\u54C1", "New Goods Releases"],
+    ["\u300E\u97F3\u697D\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Music Ranking"],
+    ["\u300E\u97F3\u697D\u300F\u65B0\u7740\u4F5C\u54C1", "New Music Releases"],
+    ["\u300E\u6620\u50CF\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Video Ranking"],
+    ["\u300E\u6620\u50CF\u300F\u65B0\u7740\u4F5C\u54C1", "New Video Releases"],
+    ["\u3046\u308A\u307C\u3046\u95A2\u9023\u60C5\u5831", "Uribou Information"],
+    ["\u300E\u3046\u308A\u307C\u3046\u3056\u3063\u304B\u5E97\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Uribou Zakka Shop Ranking"],
+    ["\u300E\u3046\u308A\u307C\u3046\u3056\u3063\u304B\u5E97\u300F\u65B0\u7740\u4F5C\u54C1", "New Uribou Zakka Shop Releases"],
+    ["\u96FB\u5B50\u66F8\u7C4D\u95A2\u9023\u60C5\u5831", "E-book Information"],
+    ["\u300E\u540C\u4EBA\u8A8C(\u96FB\u5B50)\u300F\u65B0\u7740\u4F5C\u54C1", "New Doujinshi E-book Releases"],
+    ["\u300E\u6210\u5E74\u30B3\u30DF\u30C3\u30AF(\u96FB\u5B50)\u300F\u65B0\u7740\u4F5C\u54C1", "New Adult Comic E-book Releases"],
+    ["\u300E\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u300F\u65B0\u7740\u4F5C\u54C1", "New Download Releases"],
+    ["\u300E\u96FB\u5B50\u66F8\u7C4D\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "E-book Ranking"],
+    ["\u300E\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u4F5C\u54C1\u300F\u30E9\u30F3\u30AD\u30F3\u30B0", "Download Works Ranking"],
+    ["\u3042\u306A\u305F\u3078\u306E\u30AA\u30B9\u30B9\u30E1", "Recommendations for You"],
+    ["\u304A\u77E5\u3089\u305B", "Notices"],
+    ["\u3010\u30E9\u30F3\u30AD\u30F3\u30B0\u3011", "Ranking"],
+    /* Front page .page-headline headings */
+    ["\u6700\u65B0\u30E9\u30F3\u30AD\u30F3\u30B0\u60C5\u5831", "Latest Ranking Information"],
+    ["\u4E88\u7D04\u958B\u59CB", "Preorders Open"],
+    ["\u65B0\u5165\u8377", "New Arrivals"],
+    ["\u4EBA\u6C17\u30AD\u30FC\u30EF\u30FC\u30C9", "Popular Keywords"],
+    ["\u30B8\u30E3\u30F3\u30EB", "Genre"],
+    ["\u30EC\u30FC\u30D9\u30EB\u3067\u63A2\u3059", "Search by Label"],
+    ["\u30B5\u30FC\u30AF\u30EB\u3067\u63A2\u3059", "Search by Circle"],
+    ["\u95A2\u9023\u30AD\u30FC\u30EF\u30FC\u30C9\u3067\u63A2\u3059", "Search by Related Keywords"],
+    ["\u30B5\u30FC\u30AF\u30EB\u65B0\u7740\u6295\u7A3F\u753B\u50CF", "Latest Circle Posted Images"],
+    ["\u30B5\u30FC\u30AF\u30EB\u65B0\u7740\u60C5\u5831", "Latest Circle News"],
+    ["\u7279\u96C6\u60C5\u5831", "Feature Information"]
+  ]);
+  function normalizeText(text) {
+    return String(text || "").replace(/\u00a0/g, " ").replace(/[ \t\r\n]+/g, " ").trim();
+  }
+  function getTextNodes(root) {
+    const nodes = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node2) {
+        const parent = node2.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        const tagName = parent.tagName.toLowerCase();
+        if (tagName === "script" || tagName === "style" || tagName === "noscript") {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    let node = walker.nextNode();
+    while (node) {
+      nodes.push(node);
+      node = walker.nextNode();
+    }
+    return nodes;
+  }
+  function applyOriginalSpacing(originalText, replacementText) {
+    const leadingSpace = String(originalText).match(/^\s*/)?.[0] || "";
+    const trailingSpace = String(originalText).match(/\s*$/)?.[0] || "";
+    return `${leadingSpace}${replacementText}${trailingSpace}`;
+  }
+  function replaceTextPreservingStructure(element, replacementText) {
+    const textNodes = getTextNodes(element);
+    const firstTextNode = textNodes.find((node) => normalizeText(node.nodeValue));
+    if (!firstTextNode) {
+      element.textContent = replacementText;
+      return;
+    }
+    for (const node of textNodes) {
+      if (node === firstTextNode) {
+        node.nodeValue = applyOriginalSpacing(node.nodeValue, replacementText);
+      } else if (normalizeText(node.nodeValue)) {
+        node.nodeValue = "";
+      }
+    }
+  }
+  function translateElement(element) {
+    if (!(element instanceof HTMLElement)) return;
+    const japaneseText = normalizeText(element.textContent);
+    if (!japaneseText) return;
+    const englishText = TRANSLATIONS.get(japaneseText);
+    if (!englishText || japaneseText === englishText) return;
+    replaceTextPreservingStructure(element, englishText);
+    element.dataset.melonbooksHeadingTranslatorOriginal = japaneseText;
+  }
+  function translateAll(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll(HEADING_SELECTOR).forEach((el) => translateElement(el));
+  }
+  var HeadingTranslatorModule = {
+    id: "heading-translator",
+    name: "Heading Translator",
+    lifecycle: "document-start",
+    matches(context) {
+      return context.isMelonbooks;
+    },
+    init() {
+      translateAll(document);
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          translateAll(document);
+        }, { once: true });
+      }
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement) {
+              if (node.matches(HEADING_SELECTOR)) {
+                translateElement(node);
+              }
+              translateAll(node);
+            }
+          }
+          if (mutation.type === "characterData" && mutation.target && mutation.target.parentElement) {
+            const heading = mutation.target.parentElement.closest(HEADING_SELECTOR);
+            if (heading) {
+              translateElement(heading);
+            }
+          }
+        }
+      });
+      const startObserver = () => {
+        const target = document.body || document.documentElement;
+        if (target) {
+          observer.observe(target, {
+            childList: true,
+            subtree: true,
+            characterData: true
+          });
+        }
+      };
+      if (document.body || document.documentElement) {
+        startObserver();
+      } else {
+        document.addEventListener("DOMContentLoaded", startObserver, { once: true });
+      }
+    }
+  };
+
   // src/main.js
   var modules = [
     ForceDetailThumbnailsModule,
-    CartDuplicateWarningModule
+    CartDuplicateWarningModule,
+    HeadingTranslatorModule
   ];
   function bootstrap() {
     const context = createExecutionContext();

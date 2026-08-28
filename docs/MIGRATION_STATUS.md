@@ -17,7 +17,7 @@
 ## Modules
 - [x] Force Detail Thumbnails
 - [x] Cart Duplicate Warning
-- [ ] Heading Translator
+- [x] Heading Translator
 - [ ] Product Info Layout
 - [ ] Search Columns
 - [ ] Force Listing Images

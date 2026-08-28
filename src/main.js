@@ -5,11 +5,13 @@ import { createExecutionContext } from './core/routing.js';
 import { runAt } from './core/lifecycle.js';
 import { ForceDetailThumbnailsModule } from './modules/force-detail-thumbnails.js';
 import { CartDuplicateWarningModule } from './modules/cart-duplicate-warning.js';
+import { HeadingTranslatorModule } from './modules/heading-translator.js';
 
 // Module registry
 const modules = [
   ForceDetailThumbnailsModule,
-  CartDuplicateWarningModule
+  CartDuplicateWarningModule,
+  HeadingTranslatorModule
 ];
 
 function bootstrap() {
