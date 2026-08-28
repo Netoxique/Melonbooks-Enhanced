@@ -27,7 +27,7 @@
 - [x] Favorite Author Toggle
 - [x] Wishlist Toggle
 - [x] Favorite Authors Infinite Scroll
-- [ ] Wishlist Infinite Scroll
+- [x] Wishlist Infinite Scroll
 - [ ] VPN Link Handler
 
 ## Release

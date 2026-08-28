@@ -15,6 +15,7 @@ import { FavoriteCircleToggleModule } from './modules/favorite-circle-toggle.js'
 import { FavoriteAuthorToggleModule } from './modules/favorite-author-toggle.js';
 import { WishlistToggleModule } from './modules/wishlist-toggle.js';
 import { FavoriteAuthorsInfiniteScrollModule } from './modules/favorite-authors-infinite-scroll.js';
+import { WishlistInfiniteScrollModule } from './modules/wishlist-infinite-scroll.js';
 
 // Module registry
 const modules = [
@@ -29,7 +30,8 @@ const modules = [
   FavoriteCircleToggleModule,
   FavoriteAuthorToggleModule,
   WishlistToggleModule,
-  FavoriteAuthorsInfiniteScrollModule
+  FavoriteAuthorsInfiniteScrollModule,
+  WishlistInfiniteScrollModule
 ];
 
 function bootstrap() {
