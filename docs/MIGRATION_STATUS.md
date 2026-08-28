@@ -28,7 +28,7 @@
 - [x] Wishlist Toggle
 - [x] Favorite Authors Infinite Scroll
 - [x] Wishlist Infinite Scroll
-- [x] VPN Link Handler
+- [x] VPN Link Handler migrated in 0.15.0, removed from the master in 1.0.3 and retained only as a legacy standalone baseline
 
 ## Release
 - [x] Full regression test
