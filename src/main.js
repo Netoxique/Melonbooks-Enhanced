@@ -9,6 +9,7 @@ import { HeadingTranslatorModule } from './modules/heading-translator.js';
 import { ProductInfoLayoutModule } from './modules/product-info-layout.js';
 import { SearchColumnsModule } from './modules/search-columns.js';
 import { ForceListingImagesModule } from './modules/force-listing-images.js';
+import { ListingHoverModule } from './modules/listing-hover.js';
 
 // Module registry
 const modules = [
@@ -17,7 +18,8 @@ const modules = [
   HeadingTranslatorModule,
   ProductInfoLayoutModule,
   SearchColumnsModule,
-  ForceListingImagesModule
+  ForceListingImagesModule,
+  ListingHoverModule
 ];
 
 function bootstrap() {

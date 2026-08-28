@@ -21,7 +21,7 @@
 - [x] Product Info Layout
 - [x] Search Columns
 - [x] Force Listing Images
-- [ ] Listing Hover
+- [x] Listing Hover
 - [ ] Orders Grid & Infinite Scroll
 - [ ] Favorite Circle Toggle
 - [ ] Favorite Author Toggle
