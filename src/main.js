@@ -4,10 +4,12 @@ import { Settings } from './core/storage.js';
 import { createExecutionContext } from './core/routing.js';
 import { runAt } from './core/lifecycle.js';
 import { ForceDetailThumbnailsModule } from './modules/force-detail-thumbnails.js';
+import { CartDuplicateWarningModule } from './modules/cart-duplicate-warning.js';
 
 // Module registry
 const modules = [
-  ForceDetailThumbnailsModule
+  ForceDetailThumbnailsModule,
+  CartDuplicateWarningModule
 ];
 
 function bootstrap() {
