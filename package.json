@@ -1,6 +1,6 @@
 {
   "name": "melonbooks-enhancements",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.",
   "type": "module",
   "scripts": {

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 2026-08-28
+
+### Fixed
+- **Wishlist Infinite Scroll** now prevents duplicate product cards when multiple infinite-scroll instances or overlapping loads append the same wishlist page.
+- Added live-DOM product de-duplication keyed by Melonbooks product ID, including a `MutationObserver` safeguard for duplicates inserted after initialization.
+- Added a per-list initialization guard and pre-insertion checks against tracked, pending, and already-rendered product IDs.
+- Duplicate-only fetched pages no longer terminate infinite scrolling early; the loader advances to the next page instead.
+
+---
+
 ## [1.0.1] - 2026-08-28
 
 ### Fixed

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxique/Melonbooks-Enhanced
-// @version      1.0.1
+// @version      1.0.2
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxique
 // @match        https://*.melonbooks.co.jp/*
@@ -29,7 +29,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxique/Melonbooks-Enhanced");
-  __publicField(ScriptInfo, "version", "1.0.1");
+  __publicField(ScriptInfo, "version", "1.0.2");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxique");
 
@@ -4261,6 +4261,8 @@
 
   // src/modules/wishlist-infinite-scroll.js
   var PRELOAD_DISTANCE = 1200;
+  var STATUS_ID = "mb-wishlist-infinite-scroll-status";
+  var INITIALIZED_ATTRIBUTE = "data-mb-wishlist-infinite-scroll-initialized";
   var WishlistInfiniteScrollModule = {
     id: "wishlist-infinite-scroll",
     name: "Wishlist Infinite Scroll",
@@ -4275,6 +4277,10 @@
       if (!itemList || !pageForm) {
         return;
       }
+      if (itemList.hasAttribute(INITIALIZED_ATTRIBUTE)) {
+        return;
+      }
+      itemList.setAttribute(INITIALIZED_ATTRIBUTE, "1");
       function isProductItem(item) {
         if (!item || item.nodeType !== Node.ELEMENT_NODE || item.tagName !== "LI" || item.classList.contains("item-list__placeholder")) {
           return false;
@@ -4330,15 +4336,68 @@
       let finished = currentPage >= maxPage;
       let retryBlocked = false;
       let observer = null;
+      let dedupeInProgress = false;
       const loadedPages = /* @__PURE__ */ new Set([currentPage]);
-      const itemKeys = new Set(
-        [...itemList.children].filter((item) => isProductItem(item)).map((item) => getItemKey(item)).filter(Boolean)
-      );
-      const status = document.createElement("div");
-      status.id = "mb-wishlist-infinite-scroll-status";
-      status.setAttribute("aria-live", "polite");
-      status.style.cssText = "text-align:center;padding:14px 8px;font-size:12px;opacity:.75;min-height:16px";
-      itemList.closest(".item-list")?.after(status);
+      const itemKeys = /* @__PURE__ */ new Set();
+      function removeDuplicateProducts() {
+        if (dedupeInProgress) {
+          return;
+        }
+        dedupeInProgress = true;
+        try {
+          const seen = /* @__PURE__ */ new Set();
+          for (const item of [...itemList.children]) {
+            if (!isProductItem(item)) {
+              continue;
+            }
+            const key = getItemKey(item);
+            if (!key) {
+              continue;
+            }
+            if (seen.has(key)) {
+              item.remove();
+              continue;
+            }
+            seen.add(key);
+          }
+          itemKeys.clear();
+          for (const key of seen) {
+            itemKeys.add(key);
+          }
+        } finally {
+          dedupeInProgress = false;
+        }
+      }
+      function hasLiveProductKey(key) {
+        if (!key) {
+          return false;
+        }
+        for (const item of itemList.children) {
+          if (isProductItem(item) && getItemKey(item) === key) {
+            return true;
+          }
+        }
+        return false;
+      }
+      removeDuplicateProducts();
+      const dedupeObserver = new MutationObserver((mutations) => {
+        if (mutations.some(
+          (mutation) => [...mutation.addedNodes].some(
+            (node) => node.nodeType === Node.ELEMENT_NODE && node.tagName === "LI"
+          )
+        )) {
+          removeDuplicateProducts();
+        }
+      });
+      dedupeObserver.observe(itemList, { childList: true });
+      const existingStatus = document.getElementById(STATUS_ID);
+      const status = existingStatus || document.createElement("div");
+      if (!existingStatus) {
+        status.id = STATUS_ID;
+        status.setAttribute("aria-live", "polite");
+        status.style.cssText = "text-align:center;padding:14px 8px;font-size:12px;opacity:.75;min-height:16px";
+        itemList.closest(".item-list")?.after(status);
+      }
       function setStatus(message) {
         status.textContent = message;
       }
@@ -4464,21 +4523,23 @@
         if (!incomingList) {
           return 0;
         }
+        removeDuplicateProducts();
         const fragment = document.createDocumentFragment();
+        const pendingKeys = /* @__PURE__ */ new Set();
         let added = 0;
         [...incomingList.children].forEach((sourceItem, index) => {
           if (!isProductItem(sourceItem)) {
             return;
           }
           const key = getItemKey(sourceItem);
-          if (key && itemKeys.has(key)) {
+          if (key && (itemKeys.has(key) || pendingKeys.has(key) || hasLiveProductKey(key))) {
             return;
           }
           const item = document.importNode(sourceItem, true);
           prepareImportedItem(item, page, index + 1);
           fragment.appendChild(item);
           if (key) {
-            itemKeys.add(key);
+            pendingKeys.add(key);
           }
           added += 1;
         });
@@ -4487,6 +4548,10 @@
         }
         const insertionPoint = getPlaceholderInsertionPoint();
         itemList.insertBefore(fragment, insertionPoint);
+        for (const key of pendingKeys) {
+          itemKeys.add(key);
+        }
+        removeDuplicateProducts();
         return added;
       }
       function maybeLoadMore() {
@@ -4512,14 +4577,14 @@
         try {
           const doc = await fetchPage(nextPage);
           const added = appendItems(doc, nextPage);
-          if (added === 0) {
-            finish();
-            return;
-          }
           syncTransactionId(doc);
           loadedPages.add(nextPage);
           currentPage = nextPage;
           maxPage = Math.max(maxPage, getMaxPage(doc));
+          if (added === 0 && currentPage < maxPage) {
+            setStatus("");
+            return;
+          }
           if (currentPage >= maxPage) {
             finish();
             return;
