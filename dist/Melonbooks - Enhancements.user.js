@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxic/melonbooks-enhancements
-// @version      0.14.0
+// @version      0.15.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxic
 // @match        https://*.melonbooks.co.jp/*
@@ -29,7 +29,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxic/melonbooks-enhancements");
-  __publicField(ScriptInfo, "version", "0.14.0");
+  __publicField(ScriptInfo, "version", "0.15.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxic");
 
@@ -4551,6 +4551,118 @@
     }
   };
 
+  // src/modules/vpn-link-handler.js
+  var MELONBOOKS_HOST = "www.melonbooks.co.jp";
+  var PRODUCT_PATH = "/detail/detail.php";
+  var RETRY_FRAGMENT = "outlook-vpn-retry";
+  var RETRY_DELAY_MS = 500;
+  function unwrapSafeLink(rawUrl) {
+    let currentUrl = rawUrl;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(currentUrl);
+      } catch {
+        return currentUrl;
+      }
+      if (!parsedUrl.hostname.endsWith("safelinks.protection.outlook.com")) {
+        return currentUrl;
+      }
+      const wrappedUrl = parsedUrl.searchParams.get("url");
+      if (!wrappedUrl) {
+        return currentUrl;
+      }
+      currentUrl = wrappedUrl;
+    }
+    return currentUrl;
+  }
+  function cleanMelonbooksUrl(rawUrl) {
+    const unwrappedUrl = unwrapSafeLink(rawUrl);
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(unwrappedUrl);
+    } catch {
+      return null;
+    }
+    if (parsedUrl.hostname !== MELONBOOKS_HOST) {
+      return null;
+    }
+    if (parsedUrl.pathname !== PRODUCT_PATH) {
+      return null;
+    }
+    const productId = parsedUrl.searchParams.get("product_id");
+    if (!productId) {
+      return null;
+    }
+    const cleanUrl = new URL(`https://${MELONBOOKS_HOST}${PRODUCT_PATH}`);
+    cleanUrl.searchParams.set("product_id", productId);
+    return cleanUrl.toString();
+  }
+  function createRetryUrl(targetUrl) {
+    const retryUrl = new URL(targetUrl);
+    retryUrl.hash = RETRY_FRAGMENT;
+    return retryUrl.toString();
+  }
+  var VpnLinkHandlerModule = {
+    id: "vpn-link-handler",
+    name: "VPN Link Handler",
+    lifecycle: "document-start",
+    matches(context) {
+      return context.route === "outlook" || context.isOutlook || context.domain === "melonbooks" && context.location.hash.includes(RETRY_FRAGMENT);
+    },
+    init(context) {
+      if (context.location.hostname === MELONBOOKS_HOST && context.location.hash === `#${RETRY_FRAGMENT}`) {
+        let retryProductPage = function() {
+          if (retryStarted) return;
+          retryStarted = true;
+          setTimeout(() => {
+            context.location.reload();
+          }, RETRY_DELAY_MS);
+        };
+        injectStyle(
+          "vpn-retry-hiding",
+          `html { visibility: hidden !important; }`
+        );
+        const cleanTarget = context.location.origin + context.location.pathname + context.location.search;
+        history.replaceState(null, "", cleanTarget);
+        let retryStarted = false;
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", retryProductPage, { once: true });
+          setTimeout(retryProductPage, 2e3);
+        } else {
+          retryProductPage();
+        }
+        return;
+      }
+      function openMelonbooksLink(event) {
+        const isLeftClick = event.type === "click" && event.button === 0;
+        const isMiddleClick = event.type === "auxclick" && event.button === 1;
+        if (!isLeftClick && !isMiddleClick) return;
+        const eventTarget = event.target;
+        if (!(eventTarget instanceof Element)) return;
+        const link = eventTarget.closest("a[href]");
+        if (!link) return;
+        const cleanUrl = cleanMelonbooksUrl(link.href);
+        if (!cleanUrl) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        const retryUrl = createRetryUrl(cleanUrl);
+        if (typeof GM_openInTab === "function") {
+          GM_openInTab(retryUrl, {
+            active: isLeftClick,
+            insert: true,
+            setParent: false
+          });
+        } else {
+          window.open(retryUrl, "_blank", "noopener,noreferrer");
+        }
+      }
+      document.addEventListener("click", openMelonbooksLink, true);
+      document.addEventListener("auxclick", openMelonbooksLink, true);
+    }
+  };
+
   // src/main.js
   var modules = [
     ForceDetailThumbnailsModule,
@@ -4565,7 +4677,8 @@
     FavoriteAuthorToggleModule,
     WishlistToggleModule,
     FavoriteAuthorsInfiniteScrollModule,
-    WishlistInfiniteScrollModule
+    WishlistInfiniteScrollModule,
+    VpnLinkHandlerModule
   ];
   function bootstrap() {
     const context = createExecutionContext();

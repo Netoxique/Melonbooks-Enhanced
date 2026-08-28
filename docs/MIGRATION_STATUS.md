@@ -28,7 +28,7 @@
 - [x] Wishlist Toggle
 - [x] Favorite Authors Infinite Scroll
 - [x] Wishlist Infinite Scroll
-- [ ] VPN Link Handler
+- [x] VPN Link Handler
 
 ## Release
 - [ ] Full regression test
