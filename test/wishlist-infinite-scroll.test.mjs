@@ -27,3 +27,40 @@ test('Wishlist Infinite Scroll - inserts fetched products before placeholders', 
     'fetched products are not appended after the placeholder elements'
   );
 });
+
+test('Wishlist Infinite Scroll - prevents duplicate initialization', () => {
+  assert.ok(
+    source.includes("itemList.hasAttribute(INITIALIZED_ATTRIBUTE)"),
+    'the module checks whether the wishlist list has already been initialized'
+  );
+  assert.ok(
+    source.includes("itemList.setAttribute(INITIALIZED_ATTRIBUTE, '1')"),
+    'the module marks the wishlist list as initialized'
+  );
+});
+
+test('Wishlist Infinite Scroll - deduplicates products already present in the live DOM', () => {
+  assert.ok(
+    source.includes('function removeDuplicateProducts()'),
+    'the module contains a live DOM duplicate-removal pass'
+  );
+  assert.ok(
+    source.includes('if (seen.has(key))'),
+    'duplicate product keys are detected during the live DOM scan'
+  );
+  assert.ok(
+    source.includes('item.remove();'),
+    'duplicate product elements are removed from the wishlist'
+  );
+  assert.ok(
+    source.includes('new MutationObserver'),
+    'the module watches for duplicate products inserted after initialization'
+  );
+});
+
+test('Wishlist Infinite Scroll - rejects duplicate products before insertion', () => {
+  assert.ok(
+    source.includes('itemKeys.has(key) || pendingKeys.has(key) || hasLiveProductKey(key)'),
+    'incoming products are checked against tracked, pending, and live DOM keys'
+  );
+});
