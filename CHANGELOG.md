@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] - 2026-08-28
+
+### Changed
+- Removed the **VPN Link Handler** from the master userscript so Melonbooks Enhanced no longer runs on Outlook Web.
+- Removed the Outlook `@match` entries and the `GM_openInTab` grant from the generated master userscript metadata.
+- The VPN link handling functionality is now intended to be installed and maintained as a separate standalone userscript.
+
+---
+
 ## [1.0.2] - 2026-08-28
 
 ### Fixed
