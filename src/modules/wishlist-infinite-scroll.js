@@ -4,6 +4,8 @@
  */
 
 const PRELOAD_DISTANCE = 1200;
+const STATUS_ID = 'mb-wishlist-infinite-scroll-status';
+const INITIALIZED_ATTRIBUTE = 'data-mb-wishlist-infinite-scroll-initialized';
 
 export const WishlistInfiniteScrollModule = {
   id: 'wishlist-infinite-scroll',
@@ -24,6 +26,12 @@ export const WishlistInfiniteScrollModule = {
     if (!itemList || !pageForm) {
       return;
     }
+
+    if (itemList.hasAttribute(INITIALIZED_ATTRIBUTE)) {
+      return;
+    }
+
+    itemList.setAttribute(INITIALIZED_ATTRIBUTE, '1');
 
     function isProductItem(item) {
       if (
@@ -108,22 +116,89 @@ export const WishlistInfiniteScrollModule = {
     let finished = currentPage >= maxPage;
     let retryBlocked = false;
     let observer = null;
+    let dedupeInProgress = false;
 
     const loadedPages = new Set([currentPage]);
-    const itemKeys = new Set(
-      [...itemList.children]
-        .filter((item) => isProductItem(item))
-        .map((item) => getItemKey(item))
-        .filter(Boolean)
-    );
+    const itemKeys = new Set();
 
-    const status = document.createElement('div');
-    status.id = 'mb-wishlist-infinite-scroll-status';
-    status.setAttribute('aria-live', 'polite');
-    status.style.cssText =
-      'text-align:center;padding:14px 8px;font-size:12px;opacity:.75;min-height:16px';
+    function removeDuplicateProducts() {
+      if (dedupeInProgress) {
+        return;
+      }
 
-    itemList.closest('.item-list')?.after(status);
+      dedupeInProgress = true;
+
+      try {
+        const seen = new Set();
+
+        for (const item of [...itemList.children]) {
+          if (!isProductItem(item)) {
+            continue;
+          }
+
+          const key = getItemKey(item);
+
+          if (!key) {
+            continue;
+          }
+
+          if (seen.has(key)) {
+            item.remove();
+            continue;
+          }
+
+          seen.add(key);
+        }
+
+        itemKeys.clear();
+        for (const key of seen) {
+          itemKeys.add(key);
+        }
+      } finally {
+        dedupeInProgress = false;
+      }
+    }
+
+    function hasLiveProductKey(key) {
+      if (!key) {
+        return false;
+      }
+
+      for (const item of itemList.children) {
+        if (isProductItem(item) && getItemKey(item) === key) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    removeDuplicateProducts();
+
+    const dedupeObserver = new MutationObserver((mutations) => {
+      if (
+        mutations.some((mutation) =>
+          [...mutation.addedNodes].some(
+            (node) => node.nodeType === Node.ELEMENT_NODE && node.tagName === 'LI'
+          )
+        )
+      ) {
+        removeDuplicateProducts();
+      }
+    });
+
+    dedupeObserver.observe(itemList, { childList: true });
+
+    const existingStatus = document.getElementById(STATUS_ID);
+    const status = existingStatus || document.createElement('div');
+
+    if (!existingStatus) {
+      status.id = STATUS_ID;
+      status.setAttribute('aria-live', 'polite');
+      status.style.cssText =
+        'text-align:center;padding:14px 8px;font-size:12px;opacity:.75;min-height:16px';
+      itemList.closest('.item-list')?.after(status);
+    }
 
     function setStatus(message) {
       status.textContent = message;
@@ -209,10 +284,6 @@ export const WishlistInfiniteScrollModule = {
       const suffix = `mbis_${page}_${index}`;
       item.dataset.mbInfinitePage = String(page);
 
-      /*
-       * Every fetched Melonbooks page restarts its product form numbers at
-       * form_1_product. Rename them to prevent duplicate IDs and names.
-       */
       for (const form of item.querySelectorAll('form')) {
         form.id = `${suffix}_form`;
         form.name = `${suffix}_form`;
@@ -224,10 +295,6 @@ export const WishlistInfiniteScrollModule = {
         }
       }
 
-      /*
-       * Rebind the remove-from-wishlist button because its original inline
-       * handler references the old form ID and form name.
-       */
       for (const link of item.querySelectorAll('a[title="リストから削除"]')) {
         link.removeAttribute('onclick');
         link.addEventListener('click', (event) => {
@@ -246,7 +313,6 @@ export const WishlistInfiniteScrollModule = {
         });
       }
 
-      /* Rebind the individual purchase button. */
       for (const link of item.querySelectorAll('a.cart_in_button')) {
         link.removeAttribute('onclick');
         link.addEventListener('click', (event) => {
@@ -255,10 +321,6 @@ export const WishlistInfiniteScrollModule = {
         });
       }
 
-      /*
-       * Melonbooks binds this handler only to elements that existed when the
-       * original page loaded.
-       */
       for (const button of item.querySelectorAll('a.cart_select_button')) {
         button.addEventListener('click', (event) => {
           event.preventDefault();
@@ -282,7 +344,6 @@ export const WishlistInfiniteScrollModule = {
         });
       }
 
-      /* DOMParser does not run Melonbooks' lazy-loader for fetched documents. */
       for (const image of item.querySelectorAll('img[data-src]')) {
         if (image.dataset.src) {
           image.src = image.dataset.src;
@@ -291,11 +352,6 @@ export const WishlistInfiniteScrollModule = {
     }
 
     function getPlaceholderInsertionPoint() {
-      /*
-       * Melonbooks places invisible placeholder LI elements after the original
-       * page's products to pad and align the final flex row. Real products must
-       * always be inserted before them.
-       */
       return itemList.querySelector(':scope > li.item-list__placeholder');
     }
 
@@ -308,18 +364,23 @@ export const WishlistInfiniteScrollModule = {
         return 0;
       }
 
+      removeDuplicateProducts();
+
       const fragment = document.createDocumentFragment();
+      const pendingKeys = new Set();
       let added = 0;
 
       [...incomingList.children].forEach((sourceItem, index) => {
-        /* Do not copy Melonbooks' item-list__placeholder elements. */
         if (!isProductItem(sourceItem)) {
           return;
         }
 
         const key = getItemKey(sourceItem);
 
-        if (key && itemKeys.has(key)) {
+        if (
+          key &&
+          (itemKeys.has(key) || pendingKeys.has(key) || hasLiveProductKey(key))
+        ) {
           return;
         }
 
@@ -328,7 +389,7 @@ export const WishlistInfiniteScrollModule = {
         fragment.appendChild(item);
 
         if (key) {
-          itemKeys.add(key);
+          pendingKeys.add(key);
         }
 
         added += 1;
@@ -338,12 +399,14 @@ export const WishlistInfiniteScrollModule = {
         return 0;
       }
 
-      /*
-       * Inserting with appendChild would place new products after Melonbooks'
-       * invisible placeholders, making each fetched page start on a new row.
-       */
       const insertionPoint = getPlaceholderInsertionPoint();
       itemList.insertBefore(fragment, insertionPoint);
+
+      for (const key of pendingKeys) {
+        itemKeys.add(key);
+      }
+
+      removeDuplicateProducts();
       return added;
     }
 
@@ -378,15 +441,15 @@ export const WishlistInfiniteScrollModule = {
         const doc = await fetchPage(nextPage);
         const added = appendItems(doc, nextPage);
 
-        if (added === 0) {
-          finish();
-          return;
-        }
-
         syncTransactionId(doc);
         loadedPages.add(nextPage);
         currentPage = nextPage;
         maxPage = Math.max(maxPage, getMaxPage(doc));
+
+        if (added === 0 && currentPage < maxPage) {
+          setStatus('');
+          return;
+        }
 
         if (currentPage >= maxPage) {
           finish();
