@@ -21,7 +21,6 @@ A unified, modular, high-performance userscript that consolidates standalone enh
 | **Wishlist Toggle** | Enables in-place addition or removal of products to/from your wishlist directly from the product detail page. | `/detail/*` |
 | **Favorite Authors Infinite Scroll** | Automatically loads all remaining pages of favorite authors and aligns favorite/mail controls beside each author name. | `/mypage/favorite_author.php` |
 | **Wishlist Infinite Scroll** | Seamlessly loads subsequent wishlist pages, re-binds product actions, and inserts new products before Melonbooks' invisible row placeholders so page boundaries do not leave empty grid positions. | `/mypage/favorite.php` |
-| **VPN Link Handler** | Cleans Melonbooks product links in Outlook Web, unwraps Microsoft Safe Links, opens them in a dedicated tab via `GM_openInTab`, and retries on Melonbooks to prevent 404 errors. | Outlook Web / Melonbooks |
 
 ---
 
