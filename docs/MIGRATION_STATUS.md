@@ -23,7 +23,7 @@
 - [x] Force Listing Images
 - [x] Listing Hover
 - [x] Orders Grid & Infinite Scroll
-- [ ] Favorite Circle Toggle
+- [x] Favorite Circle Toggle
 - [ ] Favorite Author Toggle
 - [ ] Wishlist Toggle
 - [ ] Favorite Authors Infinite Scroll

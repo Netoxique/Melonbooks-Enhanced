@@ -11,6 +11,7 @@ import { SearchColumnsModule } from './modules/search-columns.js';
 import { ForceListingImagesModule } from './modules/force-listing-images.js';
 import { ListingHoverModule } from './modules/listing-hover.js';
 import { OrdersGridInfiniteScrollModule } from './modules/orders-grid-infinite-scroll.js';
+import { FavoriteCircleToggleModule } from './modules/favorite-circle-toggle.js';
 
 // Module registry
 const modules = [
@@ -21,7 +22,8 @@ const modules = [
   SearchColumnsModule,
   ForceListingImagesModule,
   ListingHoverModule,
-  OrdersGridInfiniteScrollModule
+  OrdersGridInfiniteScrollModule,
+  FavoriteCircleToggleModule
 ];
 
 function bootstrap() {
