@@ -29,8 +29,6 @@ A unified, modular, high-performance userscript that consolidates standalone enh
 
 1. Install a userscript manager such as [Tampermonkey](https://www.tampermonkey.net/) in your browser.
 2. **[Click here to install Melonbooks - Enhancements](https://raw.githubusercontent.com/Netoxique/Melonbooks-Enhanced/main/dist/Melonbooks%20-%20Enhancements.user.js)**.
-3. Confirm the installation when your userscript manager opens.
-4. If you have any older standalone Melonbooks userscripts installed, disable or uninstall them to prevent duplicate execution.
 
 ---
 
