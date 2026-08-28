@@ -1,0 +1,22 @@
+{
+  "name": "melonbooks-enhancements",
+  "version": "0.1.0",
+  "description": "Modular master userscript for Melonbooks enhancements",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "node tools/build.mjs --check",
+    "watch": "node tools/build.mjs --watch",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "userscript",
+    "tampermonkey",
+    "melonbooks"
+  ],
+  "author": "Netoxic",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
