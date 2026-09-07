@@ -69,7 +69,7 @@ const BANNER_CSS = `
 export const CartDuplicateWarningModule = {
   id: 'cart-duplicate-warning',
   name: 'Cart Duplicate Warning',
-  lifecycle: 'document-idle',
+  lifecycle: 'dom-ready',
 
   matches(context) {
     return context.route === 'melonbooks-cart' || context.location.pathname.includes('/clipboard');
