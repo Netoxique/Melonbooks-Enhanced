@@ -15,7 +15,7 @@ const PLACEHOLDER_PATTERNS = [
 export const ForceListingImagesModule = {
   id: 'force-listing-images',
   name: 'Force Load Listing Images',
-  lifecycle: 'document-start',
+  lifecycle: 'dom-ready',
 
   matches(context) {
     return context.isMelonbooks && !context.location.pathname.startsWith('/detail/');
@@ -162,10 +162,6 @@ export const ForceListingImagesModule = {
       setTimeout(forceImages, 2500);
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', start, { once: true });
-    } else {
-      start();
-    }
+    start();
   }
 };
