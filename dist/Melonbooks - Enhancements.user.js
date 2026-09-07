@@ -413,7 +413,7 @@
   var ForceDetailThumbnailsModule = {
     id: "force-detail-thumbnails",
     name: "Force Detail Thumbnails",
-    lifecycle: "dom-ready",
+    lifecycle: "document-start",
     matches(context) {
       return context.route === "melonbooks-product" || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
     },
@@ -1271,6 +1271,7 @@
     "now_printing.jpg",
     "noimage"
   ];
+  var LISTING_IMAGE_SELECTOR = LOAD_SAMPLE_IMAGES ? "img[data-src], img[data-srcset], source[data-srcset]" : ".item-thumbnail img[data-src], img.lazyload_product[data-src]";
   var ForceListingImagesModule = {
     id: "force-listing-images",
     name: "Force Load Listing Images",
@@ -1355,38 +1356,20 @@
       }
       function forceImages(root = document) {
         if (!isListingPage()) return;
-        const selector = LOAD_SAMPLE_IMAGES ? "img[data-src], img[data-srcset], source[data-srcset]" : ".item-thumbnail img[data-src], img.lazyload_product[data-src]";
-        root.querySelectorAll(selector).forEach((node) => {
+        root.querySelectorAll(LISTING_IMAGE_SELECTOR).forEach((node) => {
           if (node instanceof HTMLImageElement) {
             forceImage(node);
           }
         });
       }
-      function watchForNewImages() {
-        const observer = new MutationObserver((mutations) => {
-          for (const mutation of mutations) {
-            for (const node of mutation.addedNodes) {
-              if (!(node instanceof Element)) continue;
-              if (node.matches && node.matches("img[data-src]")) {
-                forceImage(node);
-              }
-              forceImages(node);
-            }
-          }
-        });
-        observer.observe(document.documentElement, {
-          childList: true,
-          subtree: true
-        });
-      }
-      function start() {
-        forceImages();
-        watchForNewImages();
-        setTimeout(forceImages, 250);
-        setTimeout(forceImages, 1e3);
-        setTimeout(forceImages, 2500);
-      }
-      start();
+      observeElements(LISTING_IMAGE_SELECTOR, (node) => {
+        if (node instanceof HTMLImageElement) {
+          forceImage(node);
+        }
+      });
+      setTimeout(forceImages, 250);
+      setTimeout(forceImages, 1e3);
+      setTimeout(forceImages, 2500);
     }
   };
 
