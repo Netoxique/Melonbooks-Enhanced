@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-09-07
+
+### Changed
+- Refactored module scheduling so DOM-dependent enhancements can begin as soon as the page body exists instead of waiting for `DOMContentLoaded`.
+- `document-idle` work now begins after DOM readiness without waiting for the full `window.load` event, preventing slow images, fonts, or analytics from delaying enhancements.
+- **Cart Duplicate Warning** and **Product Info Layout** now initialize during page construction and observe later DOM additions.
+- **Force Detail Thumbnails** now watches for matching product images and replaces placeholders as each image element appears.
+- **Force Listing Images** now starts its eager-image observer during page construction instead of deferring startup until `DOMContentLoaded`.
+- Existing `document-start` CSS injection and delegated event modules continue to initialize immediately.
+
+---
+
 ## [1.0.3] - 2026-08-28
 
 ### Changed
