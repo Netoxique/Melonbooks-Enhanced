@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxique/Melonbooks-Enhanced
-// @version      1.1.0
+// @version      1.2.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxique
 // @match        https://*.melonbooks.co.jp/*
@@ -26,7 +26,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxique/Melonbooks-Enhanced");
-  __publicField(ScriptInfo, "version", "1.1.0");
+  __publicField(ScriptInfo, "version", "1.2.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxique");
 
@@ -885,28 +885,20 @@
   var ProductInfoLayoutModule = {
     id: "product-info-layout",
     name: "Product Info Layout",
-    lifecycle: "dom-ready",
+    lifecycle: "document-start",
     matches(context) {
       return context.route === "melonbooks-product" || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
     },
     init() {
       let tableReady = placeProductInfoTable();
       let tagToggleReady = setupTagToggle();
-      if (tableReady && tagToggleReady) {
-        return;
-      }
+      if (tableReady && tagToggleReady) return;
       const observer = new MutationObserver(() => {
-        if (!tableReady) {
-          tableReady = placeProductInfoTable();
-        }
-        if (!tagToggleReady) {
-          tagToggleReady = setupTagToggle();
-        }
-        if (tableReady && tagToggleReady) {
-          observer.disconnect();
-        }
+        if (!tableReady) tableReady = placeProductInfoTable();
+        if (!tagToggleReady) tagToggleReady = setupTagToggle();
+        if (tableReady && tagToggleReady) observer.disconnect();
       });
-      observer.observe(document.documentElement, {
+      observer.observe(document, {
         childList: true,
         subtree: true
       });
@@ -1056,7 +1048,6 @@
   }
   function buildCss(columnCount, sidePadding) {
     return `
-    /* Remove page-width caps from the outer wrappers */
     html, body,
     #container,
     .container_otherpage,
@@ -1073,7 +1064,6 @@
         margin-right: 0 !important;
     }
 
-    /* Break centered layout padding */
     #container,
     .container_otherpage,
     .utBReFvXjp-wrap,
@@ -1083,7 +1073,6 @@
         box-sizing: border-box !important;
     }
 
-    /* Hide sidebar */
     .utBReFvXjp-column-navi {
         display: none !important;
         width: 0 !important;
@@ -1091,7 +1080,6 @@
         flex: 0 0 0 !important;
     }
 
-    /* Add side breathing room */
     .utBReFvXjp-column-main,
     #contents,
     .search-page,
@@ -1101,7 +1089,6 @@
         padding-right: ${sidePadding} !important;
     }
 
-    /* Grid layout */
     .item-list > ul {
         display: grid !important;
         grid-template-columns: repeat(${columnCount}, minmax(0, 1fr)) !important;
@@ -1127,7 +1114,6 @@
         display: none !important;
     }
 
-    /* Prevent thumbnail stretching */
     .item-list .item-image,
     .item-list .item-thumbnail {
         width: 100% !important;
@@ -1151,10 +1137,10 @@
   `;
   }
   function applyDynamicStyle() {
-    const columnCount = getSavedColumnCount();
-    const sidePadding = getSavedSidePadding();
-    const css = buildCss(columnCount, sidePadding);
-    injectStyle("search-columns-dynamic", css);
+    injectStyle(
+      "search-columns-dynamic",
+      buildCss(getSavedColumnCount(), getSavedSidePadding())
+    );
   }
   function closePanel() {
     const panel = document.getElementById(PANEL_ID);
@@ -1221,15 +1207,13 @@
     saveBtn.addEventListener("click", saveSettings);
     resetBtn.addEventListener("click", resetSettings);
     panel.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closePanel();
-      }
+      if (event.key === "Escape") closePanel();
     });
     columnsInput.focus();
     columnsInput.select();
   }
   function addControlButton() {
-    if (document.getElementById(BUTTON_ID)) return;
+    if (!document.body || document.getElementById(BUTTON_ID)) return;
     const button = document.createElement("button");
     button.id = BUTTON_ID;
     button.type = "button";
@@ -1240,25 +1224,17 @@
   var SearchColumnsModule = {
     id: "search-columns",
     name: "Search Columns",
-    lifecycle: "dom-ready",
+    lifecycle: "document-start",
     matches(context) {
       return context.route === "melonbooks-search" || context.location.pathname.startsWith("/search/") || context.location.pathname.includes("search.php");
     },
     init() {
       injectStyle("search-columns-ui", UI_CSS);
-      const hasResults = () => !!document.querySelector(".item-list > ul, .item-list");
-      if (hasResults()) {
-        applyDynamicStyle();
+      applyDynamicStyle();
+      if (document.body) {
         addControlButton();
       } else {
-        const observer = new MutationObserver(() => {
-          if (hasResults()) {
-            observer.disconnect();
-            applyDynamicStyle();
-            addControlButton();
-          }
-        });
-        observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        observeElements("body", addControlButton, { once: true });
       }
     }
   };
@@ -1275,19 +1251,13 @@
   var ForceListingImagesModule = {
     id: "force-listing-images",
     name: "Force Load Listing Images",
-    lifecycle: "dom-ready",
+    lifecycle: "document-start",
     matches(context) {
       return context.isMelonbooks && !context.location.pathname.startsWith("/detail/");
     },
     init(context) {
       const pendingPreloads = [];
       let activePreloads = 0;
-      function isListingPage() {
-        if (context.location.pathname.startsWith("/detail/")) return false;
-        return Boolean(
-          document.querySelector(".item-list, .search-page, .ranking, .item-thumbnail, #rtoaster-template")
-        );
-      }
       function decodeHtmlEntities(value) {
         const textarea = document.createElement("textarea");
         textarea.innerHTML = value;
@@ -1319,8 +1289,7 @@
         );
       }
       function queuePreload(src) {
-        if (!src) return;
-        if (pendingPreloads.includes(src)) return;
+        if (!src || pendingPreloads.includes(src)) return;
         pendingPreloads.push(src);
         runPreloadQueue();
       }
@@ -1355,8 +1324,7 @@
         queuePreload(realSrc);
       }
       function forceImages(root = document) {
-        if (!isListingPage()) return;
-        root.querySelectorAll(LISTING_IMAGE_SELECTOR).forEach((node) => {
+        root.querySelectorAll?.(LISTING_IMAGE_SELECTOR).forEach((node) => {
           if (node instanceof HTMLImageElement) {
             forceImage(node);
           }
