@@ -10,7 +10,7 @@ const THUMBNAIL_SELECTOR = 'img[src*="now_printing.jpeg"][data-src]';
 export const ForceDetailThumbnailsModule = {
   id: 'force-detail-thumbnails',
   name: 'Force Detail Thumbnails',
-  lifecycle: 'dom-ready',
+  lifecycle: 'document-start',
 
   matches(context) {
     return context.route === 'melonbooks-product' || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
