@@ -12,6 +12,38 @@ export function onDocumentStart(callback) {
   }
 }
 
+/**
+ * Run as soon as <body> exists. This is earlier than DOMContentLoaded and lets
+ * modules install styles/observers while Melonbooks is still constructing the page.
+ */
+export function onBodyReady(callback) {
+  const run = () => {
+    queueMicrotask(() => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('[Melonbooks Enhancements][lifecycle] Error in onBodyReady callback:', error);
+      }
+    });
+  };
+
+  if (document.body) {
+    run();
+    return;
+  }
+
+  const observer = new MutationObserver(() => {
+    if (!document.body) return;
+    observer.disconnect();
+    run();
+  });
+
+  observer.observe(document, {
+    childList: true,
+    subtree: true
+  });
+}
+
 export function onDomReady(callback) {
   if (document.readyState === 'interactive' || document.readyState === 'complete') {
     queueMicrotask(() => {
@@ -47,7 +79,7 @@ export function onDocumentIdle(callback) {
         } catch (error) {
           console.error('[Melonbooks Enhancements][lifecycle] Error in onDocumentIdle callback:', error);
         }
-      }, { timeout: 1500 });
+      }, { timeout: 250 });
     } else {
       setTimeout(() => {
         try {
@@ -55,17 +87,13 @@ export function onDocumentIdle(callback) {
         } catch (error) {
           console.error('[Melonbooks Enhancements][lifecycle] Error in onDocumentIdle callback:', error);
         }
-      }, 50);
+      }, 0);
     }
   };
 
-  if (document.readyState === 'complete') {
-    runIdle();
-  } else {
-    window.addEventListener('load', () => {
-      runIdle();
-    }, { once: true });
-  }
+  // Idle work no longer waits for window.load. It starts immediately after
+  // DOMContentLoaded, so slow images/fonts/analytics cannot delay enhancements.
+  onDomReady(runIdle);
 }
 
 export function runAt(timing, callback) {
@@ -82,8 +110,10 @@ export function runAt(timing, callback) {
       onDocumentIdle(callback);
       break;
     case 'dom-ready':
+      onBodyReady(callback);
+      break;
     default:
-      onDomReady(callback);
+      onBodyReady(callback);
       break;
   }
 }
