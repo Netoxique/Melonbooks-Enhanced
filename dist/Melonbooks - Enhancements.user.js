@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxique/Melonbooks-Enhanced
-// @version      1.0.3
+// @version      1.1.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxique
 // @match        https://*.melonbooks.co.jp/*
@@ -26,7 +26,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxique/Melonbooks-Enhanced");
-  __publicField(ScriptInfo, "version", "1.0.3");
+  __publicField(ScriptInfo, "version", "1.1.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxique");
 
@@ -213,6 +213,30 @@
       console.error("[Melonbooks Enhancements][lifecycle] Error in onDocumentStart callback:", error);
     }
   }
+  function onBodyReady(callback) {
+    const run = () => {
+      queueMicrotask(() => {
+        try {
+          callback();
+        } catch (error) {
+          console.error("[Melonbooks Enhancements][lifecycle] Error in onBodyReady callback:", error);
+        }
+      });
+    };
+    if (document.body) {
+      run();
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      if (!document.body) return;
+      observer.disconnect();
+      run();
+    });
+    observer.observe(document, {
+      childList: true,
+      subtree: true
+    });
+  }
   function onDomReady(callback) {
     if (document.readyState === "interactive" || document.readyState === "complete") {
       queueMicrotask(() => {
@@ -246,7 +270,7 @@
           } catch (error) {
             console.error("[Melonbooks Enhancements][lifecycle] Error in onDocumentIdle callback:", error);
           }
-        }, { timeout: 1500 });
+        }, { timeout: 250 });
       } else {
         setTimeout(() => {
           try {
@@ -254,16 +278,10 @@
           } catch (error) {
             console.error("[Melonbooks Enhancements][lifecycle] Error in onDocumentIdle callback:", error);
           }
-        }, 50);
+        }, 0);
       }
     };
-    if (document.readyState === "complete") {
-      runIdle();
-    } else {
-      window.addEventListener("load", () => {
-        runIdle();
-      }, { once: true });
-    }
+    onDomReady(runIdle);
   }
   function runAt(timing, callback) {
     switch (timing) {
@@ -279,27 +297,51 @@
         onDocumentIdle(callback);
         break;
       case "dom-ready":
+        onBodyReady(callback);
+        break;
       default:
-        onDomReady(callback);
+        onBodyReady(callback);
         break;
     }
   }
 
   // src/modules/force-detail-thumbnails.js
+  var THUMBNAIL_SELECTOR = 'img[src*="now_printing.jpeg"][data-src]';
   var ForceDetailThumbnailsModule = {
     id: "force-detail-thumbnails",
     name: "Force Detail Thumbnails",
-    lifecycle: "document-end",
+    lifecycle: "dom-ready",
     matches(context) {
       return context.route === "melonbooks-product" || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
     },
     init() {
-      const images = document.querySelectorAll('img[src*="now_printing.jpeg"][data-src]');
-      for (const img of images) {
+      function processImage(img) {
+        if (!(img instanceof HTMLImageElement)) return;
         const originalSrc = img.getAttribute("data-src");
-        if (!originalSrc) continue;
+        if (!originalSrc) return;
         img.setAttribute("src", originalSrc);
       }
+      function processRoot(root) {
+        if (!(root instanceof Element) && !(root instanceof Document)) return;
+        if (root instanceof Element && root.matches(THUMBNAIL_SELECTOR)) {
+          processImage(root);
+        }
+        root.querySelectorAll?.(THUMBNAIL_SELECTOR).forEach(processImage);
+      }
+      processRoot(document);
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof Element) {
+              processRoot(node);
+            }
+          }
+        }
+      });
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
     }
   };
 
@@ -392,7 +434,7 @@
   var CartDuplicateWarningModule = {
     id: "cart-duplicate-warning",
     name: "Cart Duplicate Warning",
-    lifecycle: "document-idle",
+    lifecycle: "dom-ready",
     matches(context) {
       return context.route === "melonbooks-cart" || context.location.pathname.includes("/clipboard");
     },
@@ -761,7 +803,7 @@
   var ProductInfoLayoutModule = {
     id: "product-info-layout",
     name: "Product Info Layout",
-    lifecycle: "document-idle",
+    lifecycle: "dom-ready",
     matches(context) {
       return context.route === "melonbooks-product" || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
     },
@@ -1156,7 +1198,7 @@
   var ForceListingImagesModule = {
     id: "force-listing-images",
     name: "Force Load Listing Images",
-    lifecycle: "document-start",
+    lifecycle: "dom-ready",
     matches(context) {
       return context.isMelonbooks && !context.location.pathname.startsWith("/detail/");
     },
@@ -1268,11 +1310,7 @@
         setTimeout(forceImages, 1e3);
         setTimeout(forceImages, 2500);
       }
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start, { once: true });
-      } else {
-        start();
-      }
+      start();
     }
   };
 
