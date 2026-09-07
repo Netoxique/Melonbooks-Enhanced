@@ -165,7 +165,7 @@ function placeProductInfoTable() {
 export const ProductInfoLayoutModule = {
   id: 'product-info-layout',
   name: 'Product Info Layout',
-  lifecycle: 'document-idle',
+  lifecycle: 'dom-ready',
 
   matches(context) {
     return context.route === 'melonbooks-product' || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
