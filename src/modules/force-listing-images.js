@@ -21,7 +21,7 @@ const LISTING_IMAGE_SELECTOR = LOAD_SAMPLE_IMAGES
 export const ForceListingImagesModule = {
   id: 'force-listing-images',
   name: 'Force Load Listing Images',
-  lifecycle: 'dom-ready',
+  lifecycle: 'document-start',
 
   matches(context) {
     return context.isMelonbooks && !context.location.pathname.startsWith('/detail/');
@@ -30,13 +30,6 @@ export const ForceListingImagesModule = {
   init(context) {
     const pendingPreloads = [];
     let activePreloads = 0;
-
-    function isListingPage() {
-      if (context.location.pathname.startsWith('/detail/')) return false;
-      return Boolean(
-        document.querySelector('.item-list, .search-page, .ranking, .item-thumbnail, #rtoaster-template')
-      );
-    }
 
     function decodeHtmlEntities(value) {
       const textarea = document.createElement('textarea');
@@ -77,9 +70,7 @@ export const ForceListingImagesModule = {
     }
 
     function queuePreload(src) {
-      if (!src) return;
-      if (pendingPreloads.includes(src)) return;
-
+      if (!src || pendingPreloads.includes(src)) return;
       pendingPreloads.push(src);
       runPreloadQueue();
     }
@@ -112,11 +103,9 @@ export const ForceListingImagesModule = {
 
       img.classList.remove('lazyload', 'lazyloading');
       img.classList.add('lazyloaded', 'melon-force-loaded');
-
       img.setAttribute('data-melon-force-src', realSrc);
 
       const currentSrc = img.getAttribute('src') || '';
-
       if (!currentSrc || looksLikePlaceholder(currentSrc) || currentSrc !== realSrc) {
         img.src = realSrc;
       }
@@ -125,9 +114,7 @@ export const ForceListingImagesModule = {
     }
 
     function forceImages(root = document) {
-      if (!isListingPage()) return;
-
-      root.querySelectorAll(LISTING_IMAGE_SELECTOR).forEach((node) => {
+      root.querySelectorAll?.(LISTING_IMAGE_SELECTOR).forEach((node) => {
         if (node instanceof HTMLImageElement) {
           forceImage(node);
         }
@@ -140,7 +127,7 @@ export const ForceListingImagesModule = {
       }
     });
 
-    // Retain a few lightweight rescans for pages that assign data-src after insertion.
+    // Retain lightweight rescans for pages that assign data-src after insertion.
     setTimeout(forceImages, 250);
     setTimeout(forceImages, 1000);
     setTimeout(forceImages, 2500);
