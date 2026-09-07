@@ -1,5 +1,5 @@
 import { injectStyle } from '../core/styles.js';
-import { escapeHtml } from '../core/dom.js';
+import { escapeHtml, observeElements } from '../core/dom.js';
 
 /**
  * Module: Search Columns
@@ -153,7 +153,6 @@ function getSavedSidePadding() {
 
 function buildCss(columnCount, sidePadding) {
   return `
-    /* Remove page-width caps from the outer wrappers */
     html, body,
     #container,
     .container_otherpage,
@@ -170,7 +169,6 @@ function buildCss(columnCount, sidePadding) {
         margin-right: 0 !important;
     }
 
-    /* Break centered layout padding */
     #container,
     .container_otherpage,
     .utBReFvXjp-wrap,
@@ -180,7 +178,6 @@ function buildCss(columnCount, sidePadding) {
         box-sizing: border-box !important;
     }
 
-    /* Hide sidebar */
     .utBReFvXjp-column-navi {
         display: none !important;
         width: 0 !important;
@@ -188,7 +185,6 @@ function buildCss(columnCount, sidePadding) {
         flex: 0 0 0 !important;
     }
 
-    /* Add side breathing room */
     .utBReFvXjp-column-main,
     #contents,
     .search-page,
@@ -198,7 +194,6 @@ function buildCss(columnCount, sidePadding) {
         padding-right: ${sidePadding} !important;
     }
 
-    /* Grid layout */
     .item-list > ul {
         display: grid !important;
         grid-template-columns: repeat(${columnCount}, minmax(0, 1fr)) !important;
@@ -224,7 +219,6 @@ function buildCss(columnCount, sidePadding) {
         display: none !important;
     }
 
-    /* Prevent thumbnail stretching */
     .item-list .item-image,
     .item-list .item-thumbnail {
         width: 100% !important;
@@ -249,10 +243,10 @@ function buildCss(columnCount, sidePadding) {
 }
 
 function applyDynamicStyle() {
-  const columnCount = getSavedColumnCount();
-  const sidePadding = getSavedSidePadding();
-  const css = buildCss(columnCount, sidePadding);
-  injectStyle('search-columns-dynamic', css);
+  injectStyle(
+    'search-columns-dynamic',
+    buildCss(getSavedColumnCount(), getSavedSidePadding())
+  );
 }
 
 function closePanel() {
@@ -324,7 +318,6 @@ function openPanel() {
   function resetSettings() {
     localStorage.removeItem(STORAGE_KEYS.columnCount);
     localStorage.removeItem(STORAGE_KEYS.sidePadding);
-
     applyDynamicStyle();
     closePanel();
   }
@@ -335,9 +328,7 @@ function openPanel() {
   resetBtn.addEventListener('click', resetSettings);
 
   panel.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      closePanel();
-    }
+    if (event.key === 'Escape') closePanel();
   });
 
   columnsInput.focus();
@@ -345,7 +336,7 @@ function openPanel() {
 }
 
 function addControlButton() {
-  if (document.getElementById(BUTTON_ID)) return;
+  if (!document.body || document.getElementById(BUTTON_ID)) return;
 
   const button = document.createElement('button');
   button.id = BUTTON_ID;
@@ -358,7 +349,7 @@ function addControlButton() {
 export const SearchColumnsModule = {
   id: 'search-columns',
   name: 'Search Columns',
-  lifecycle: 'dom-ready',
+  lifecycle: 'document-start',
 
   matches(context) {
     return context.route === 'melonbooks-search' || context.location.pathname.startsWith('/search/') || context.location.pathname.includes('search.php');
@@ -366,21 +357,12 @@ export const SearchColumnsModule = {
 
   init() {
     injectStyle('search-columns-ui', UI_CSS);
+    applyDynamicStyle();
 
-    const hasResults = () => !!document.querySelector('.item-list > ul, .item-list');
-
-    if (hasResults()) {
-      applyDynamicStyle();
+    if (document.body) {
       addControlButton();
     } else {
-      const observer = new MutationObserver(() => {
-        if (hasResults()) {
-          observer.disconnect();
-          applyDynamicStyle();
-          addControlButton();
-        }
-      });
-      observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+      observeElements('body', addControlButton, { once: true });
     }
   }
 };
