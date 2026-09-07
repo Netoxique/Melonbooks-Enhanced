@@ -1,3 +1,5 @@
+import { observeElements } from '../core/dom.js';
+
 /**
  * Module: Force Load Listing Images
  * Forces Melonbooks listing thumbnails to load immediately instead of waiting for viewport lazy-loading.
@@ -11,6 +13,10 @@ const PLACEHOLDER_PATTERNS = [
   'now_printing.jpg',
   'noimage'
 ];
+
+const LISTING_IMAGE_SELECTOR = LOAD_SAMPLE_IMAGES
+  ? 'img[data-src], img[data-srcset], source[data-srcset]'
+  : '.item-thumbnail img[data-src], img.lazyload_product[data-src]';
 
 export const ForceListingImagesModule = {
   id: 'force-listing-images',
@@ -121,47 +127,22 @@ export const ForceListingImagesModule = {
     function forceImages(root = document) {
       if (!isListingPage()) return;
 
-      const selector = LOAD_SAMPLE_IMAGES
-        ? 'img[data-src], img[data-srcset], source[data-srcset]'
-        : '.item-thumbnail img[data-src], img.lazyload_product[data-src]';
-
-      root.querySelectorAll(selector).forEach((node) => {
+      root.querySelectorAll(LISTING_IMAGE_SELECTOR).forEach((node) => {
         if (node instanceof HTMLImageElement) {
           forceImage(node);
         }
       });
     }
 
-    function watchForNewImages() {
-      const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          for (const node of mutation.addedNodes) {
-            if (!(node instanceof Element)) continue;
+    observeElements(LISTING_IMAGE_SELECTOR, (node) => {
+      if (node instanceof HTMLImageElement) {
+        forceImage(node);
+      }
+    });
 
-            if (node.matches && node.matches('img[data-src]')) {
-              forceImage(node);
-            }
-
-            forceImages(node);
-          }
-        }
-      });
-
-      observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true
-      });
-    }
-
-    function start() {
-      forceImages();
-      watchForNewImages();
-
-      setTimeout(forceImages, 250);
-      setTimeout(forceImages, 1000);
-      setTimeout(forceImages, 2500);
-    }
-
-    start();
+    // Retain a few lightweight rescans for pages that assign data-src after insertion.
+    setTimeout(forceImages, 250);
+    setTimeout(forceImages, 1000);
+    setTimeout(forceImages, 2500);
   }
 };
