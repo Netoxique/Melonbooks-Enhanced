@@ -305,6 +305,109 @@
     }
   }
 
+  // src/core/dom.js
+  var documentElementSubscriptions = /* @__PURE__ */ new Set();
+  var documentElementObserver = null;
+  function collectMatchesFromNode(node, selector, matches) {
+    if (!(node instanceof Element)) return;
+    if (node.matches(selector)) {
+      matches.add(node);
+    }
+    node.querySelectorAll(selector).forEach((el) => matches.add(el));
+  }
+  function ensureDocumentElementObserver() {
+    if (documentElementObserver) return;
+    documentElementObserver = new MutationObserver((mutations) => {
+      for (const subscription of [...documentElementSubscriptions]) {
+        const matches = /* @__PURE__ */ new Set();
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            collectMatchesFromNode(node, subscription.selector, matches);
+          }
+        }
+        for (const element of matches) {
+          if (subscription.seen.has(element)) continue;
+          subscription.seen.add(element);
+          subscription.callback(element);
+          if (subscription.once) {
+            subscription.disconnect();
+            break;
+          }
+        }
+      }
+    });
+    documentElementObserver.observe(document, {
+      childList: true,
+      subtree: true
+    });
+  }
+  function observeElements(selector, callback, options = {}) {
+    const {
+      root = document,
+      once = false,
+      includeExisting = true
+    } = options;
+    const seen = /* @__PURE__ */ new WeakSet();
+    let disconnected = false;
+    let localObserver = null;
+    const subscription = {
+      selector,
+      callback,
+      once,
+      seen,
+      disconnect() {
+        if (disconnected) return;
+        disconnected = true;
+        documentElementSubscriptions.delete(subscription);
+        if (localObserver) {
+          localObserver.disconnect();
+          localObserver = null;
+        }
+      }
+    };
+    function processElement(element) {
+      if (!(element instanceof Element) || seen.has(element)) return false;
+      seen.add(element);
+      callback(element);
+      if (once) {
+        subscription.disconnect();
+      }
+      return true;
+    }
+    if (includeExisting && root.querySelectorAll) {
+      const existing = Array.from(root.querySelectorAll(selector));
+      for (const element of existing) {
+        processElement(element);
+        if (once && disconnected) break;
+      }
+    }
+    if (!disconnected) {
+      if (root === document) {
+        documentElementSubscriptions.add(subscription);
+        ensureDocumentElementObserver();
+      } else if (root instanceof Element || root instanceof DocumentFragment) {
+        localObserver = new MutationObserver((mutations) => {
+          const matches = /* @__PURE__ */ new Set();
+          for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+              collectMatchesFromNode(node, selector, matches);
+            }
+          }
+          for (const element of matches) {
+            processElement(element);
+            if (once && disconnected) break;
+          }
+        });
+        localObserver.observe(root, { childList: true, subtree: true });
+      }
+    }
+    return subscription.disconnect;
+  }
+  function escapeHtml(str) {
+    if (typeof str !== "string") return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
   // src/modules/force-detail-thumbnails.js
   var THUMBNAIL_SELECTOR = 'img[src*="now_printing.jpeg"][data-src]';
   var ForceDetailThumbnailsModule = {
@@ -315,32 +418,11 @@
       return context.route === "melonbooks-product" || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
     },
     init() {
-      function processImage(img) {
+      observeElements(THUMBNAIL_SELECTOR, (img) => {
         if (!(img instanceof HTMLImageElement)) return;
         const originalSrc = img.getAttribute("data-src");
         if (!originalSrc) return;
         img.setAttribute("src", originalSrc);
-      }
-      function processRoot(root) {
-        if (!(root instanceof Element) && !(root instanceof Document)) return;
-        if (root instanceof Element && root.matches(THUMBNAIL_SELECTOR)) {
-          processImage(root);
-        }
-        root.querySelectorAll?.(THUMBNAIL_SELECTOR).forEach(processImage);
-      }
-      processRoot(document);
-      const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          for (const node of mutation.addedNodes) {
-            if (node instanceof Element) {
-              processRoot(node);
-            }
-          }
-        }
-      });
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
       });
     }
   };
@@ -831,12 +913,6 @@
       setTimeout(() => observer.disconnect(), 1e4);
     }
   };
-
-  // src/core/dom.js
-  function escapeHtml(str) {
-    if (typeof str !== "string") return "";
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  }
 
   // src/modules/search-columns.js
   var STORAGE_KEYS = {
