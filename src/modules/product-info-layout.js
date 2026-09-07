@@ -47,9 +47,7 @@ function placeTableWrapper() {
   originalTableWrapper.id = INSERTED_ID;
 
   container.appendChild(heading);
-  // Move original table without cloning to preserve event handlers
   container.appendChild(originalTableWrapper);
-
   itemCart.insertAdjacentElement('afterend', container);
 
   if (originalItemDetail && originalItemDetail !== container) {
@@ -105,10 +103,8 @@ function placeEbookTableWrapper() {
   heading.textContent = '作品情報';
 
   originalTableWrapper.id = EBOOK_INSERTED_ID;
-
   container.appendChild(heading);
   container.appendChild(originalTableWrapper);
-
   productForm.insertAdjacentElement('afterend', container);
 
   if (originalItemDetail && originalItemDetail !== container) {
@@ -165,7 +161,7 @@ function placeProductInfoTable() {
 export const ProductInfoLayoutModule = {
   id: 'product-info-layout',
   name: 'Product Info Layout',
-  lifecycle: 'dom-ready',
+  lifecycle: 'document-start',
 
   matches(context) {
     return context.route === 'melonbooks-product' || /^\/(?:detail\/|products\/detail\.php)/.test(context.location.pathname);
@@ -175,23 +171,15 @@ export const ProductInfoLayoutModule = {
     let tableReady = placeProductInfoTable();
     let tagToggleReady = setupTagToggle();
 
-    if (tableReady && tagToggleReady) {
-      return;
-    }
+    if (tableReady && tagToggleReady) return;
 
     const observer = new MutationObserver(() => {
-      if (!tableReady) {
-        tableReady = placeProductInfoTable();
-      }
-      if (!tagToggleReady) {
-        tagToggleReady = setupTagToggle();
-      }
-      if (tableReady && tagToggleReady) {
-        observer.disconnect();
-      }
+      if (!tableReady) tableReady = placeProductInfoTable();
+      if (!tagToggleReady) tagToggleReady = setupTagToggle();
+      if (tableReady && tagToggleReady) observer.disconnect();
     });
 
-    observer.observe(document.documentElement, {
+    observer.observe(document, {
       childList: true,
       subtree: true
     });
