@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,6 +30,17 @@ jobs:
 
       - name: Build userscript
         run: npm run build
+
+      - name: Commit generated userscript
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "dist/Melonbooks - Enhancements.user.js"
+          if ! git diff --cached --quiet; then
+            git commit -m "Build Melonbooks Enhanced userscript"
+            git push
+          fi
 
       - name: Verify build artifact is clean and in-sync
         run: npm run check
