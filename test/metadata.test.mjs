@@ -21,6 +21,7 @@ test('Metadata - Userscript header in dist', () => {
   assert.ok(content.includes('// ==/UserScript=='), 'contains userscript closing banner');
   assert.ok(content.includes(`// @version      ${ScriptInfo.version}`), 'contains matching version');
   assert.ok(content.includes('// @grant        GM_addStyle'), 'contains GM_addStyle grant');
+  assert.ok(content.includes('// @grant        GM_registerMenuCommand'), 'contains GM_registerMenuCommand grant');
   assert.ok(!content.includes('// @grant        GM_openInTab'), 'does not grant GM_openInTab');
   assert.ok(content.includes('// @run-at       document-start'), 'contains run-at document-start');
   assert.ok(content.includes('// @match        https://*.melonbooks.co.jp/*'), 'matches melonbooks https wildcard');
