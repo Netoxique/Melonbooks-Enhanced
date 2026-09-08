@@ -36,10 +36,28 @@ const modules = [
   WishlistInfiniteScrollModule
 ];
 
+function registerMenuCommands() {
+  if (typeof GM_registerMenuCommand !== 'function') {
+    Logger.debug('GM_registerMenuCommand is unavailable; userscript menu commands were not registered.');
+    return;
+  }
+
+  const moduleId = HeadingTranslatorModule.id;
+  const enabled = Settings.isModuleEnabled(moduleId);
+  const action = enabled ? 'Disable' : 'Enable';
+
+  GM_registerMenuCommand(`${action} English Heading Translator`, () => {
+    Settings.setModuleEnabled(moduleId, !enabled);
+    window.location.reload();
+  });
+}
+
 function bootstrap() {
   const context = createExecutionContext();
   const isDebug = Settings.isDebugEnabled();
   Logger.setDebug(isDebug);
+
+  registerMenuCommands();
 
   Logger.debug(`Initializing Melonbooks Enhanced v${ScriptInfo.version} on route: ${context.route}`);
 
