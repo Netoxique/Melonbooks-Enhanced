@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-09-08
+
+### Added
+- Extended **English Heading Translator** with recurring Melonbooks event translations using separate exact, dynamic, and prefix rule sets.
+- Added dynamic numbering support for Comiket, COMITIA, Kansai COMITIA, Comic Treasure, Reitaisai, Autumn Reitaisai, Nijisousaku, Sensei no Archive, Bokura no Love Live!, Utahime Teien, Futaket, Kemoket, New Year Kemoket, ShotaFes, Bungaku Flea Market locations, Odekake Live in Sapporo, Sendai Comike, and Puniket.
+- Added year, season, and date-aware translations for Super Heroine Time, Sunshine Creation, Sunrise Creation Kyoto, TRC Only Live, Kansai Only Festa, Comic Live in Nagoya Winter Special, and Touhou Melon.
+- Added exact translations for stable recurring event headings and prefix translations that preserve changing suffixes for Heroine MIX, Naval Base Friendship Day, and Original Doujin Festival.
+- Added compatibility handling for optional Comic Treasure stars, abbreviated/full Sensei no Archive names, and Arabic or kanji Reitaisai numbering.
+
+---
+
 ## [1.3.0] - 2026-09-07
 
 ### Added
