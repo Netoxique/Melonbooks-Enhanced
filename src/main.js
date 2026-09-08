@@ -11,6 +11,7 @@ import { SearchColumnsModule } from './modules/search-columns.js';
 import { ForceListingImagesModule } from './modules/force-listing-images.js';
 import { ListingHoverModule } from './modules/listing-hover.js';
 import { OrdersGridInfiniteScrollModule } from './modules/orders-grid-infinite-scroll.js';
+import { OrderStatusColorsModule } from './modules/order-status-colors.js';
 import { FavoriteCircleToggleModule } from './modules/favorite-circle-toggle.js';
 import { FavoriteAuthorToggleModule } from './modules/favorite-author-toggle.js';
 import { WishlistToggleModule } from './modules/wishlist-toggle.js';
@@ -27,6 +28,7 @@ const modules = [
   ForceListingImagesModule,
   ListingHoverModule,
   OrdersGridInfiniteScrollModule,
+  OrderStatusColorsModule,
   FavoriteCircleToggleModule,
   FavoriteAuthorToggleModule,
   WishlistToggleModule,

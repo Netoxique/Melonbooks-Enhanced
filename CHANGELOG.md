@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-09-07
+
+### Added
+- Added **Order Status Colors** for Melonbooks MY Orders pages.
+- `ご予約` is orange, `出荷準備を開始しました` is yellow, `発送が完了しました` is blue, and `受取済み` is green.
+- Any other non-empty order status is highlighted red so unrecognized states are immediately visible.
+- Status coloring is applied to both the `注文状況` heading cell and its status cell, including order blocks loaded later by infinite scroll.
+
+---
+
 ## [1.1.0] - 2026-09-07
 
 ### Changed
