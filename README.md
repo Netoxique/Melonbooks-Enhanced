@@ -16,7 +16,7 @@ A unified, modular, high-performance userscript that consolidates standalone enh
 | **Force Listing Images** | Eagerly resolves and swaps lazy-loaded thumbnails across search and catalog listings. | Catalog / Search listings |
 | **Listing Hover & Badges** | Repositions age badges to the top-left and displays an overlay panel on hover containing titles, circles, authors, descriptions, and price tags. | Catalog / Search listings |
 | **Orders Grid & Infinite Scroll** | Expands order history to full width, provides column count (2–12) and spacing controls, defaults search range to 1 year, and seamlessly loads all order pages via infinite scroll. | `/mypage/history.php` |
-| **Order Status Colors** | Color-codes `注文状況` rows: preorder orange, shipment preparation yellow, shipped blue, received green, and any other status red. | `/mypage/history.php` |
+| **Order Status Colors** | Color-coded rows: preorder orange, shipment preparation yellow, shipped blue, received green, and any other status red. | `/mypage/history.php` |
 | **Favorite Circle Toggle** | Enables in-place addition or removal of circle favorites with live status indicators without leaving the product page. | `/detail/*` |
 | **Favorite Author Toggle** | Enables in-place addition or removal of author favorites with live status indicators without leaving the product page. | `/detail/*` |
 | **Wishlist Toggle** | Enables in-place addition or removal of products to/from your wishlist directly from the product detail page. | `/detail/*` |
