@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxique/Melonbooks-Enhanced
-// @version      1.3.1
+// @version      1.4.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxique
 // @match        https://*.melonbooks.co.jp/*
@@ -27,7 +27,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxique/Melonbooks-Enhanced");
-  __publicField(ScriptInfo, "version", "1.3.1");
+  __publicField(ScriptInfo, "version", "1.4.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxique");
 
@@ -599,7 +599,37 @@
 
   // src/modules/heading-translator.js
   var HEADING_SELECTOR = ".section-find, .page-headline, .title-h2, h2.title";
-  var TRANSLATIONS = /* @__PURE__ */ new Map([
+  var SEASON_TRANSLATIONS = /* @__PURE__ */ new Map([
+    ["\u6625", "Spring"],
+    ["\u590F", "Summer"],
+    ["\u79CB", "Autumn"],
+    ["\u51AC", "Winter"]
+  ]);
+  var LITERARY_FLEA_MARKET_LOCATIONS = /* @__PURE__ */ new Map([
+    ["\u6771\u4EAC", "Tokyo"],
+    ["\u5927\u962A", "Osaka"],
+    ["\u798F\u5CA1", "Fukuoka"],
+    ["\u4EAC\u90FD", "Kyoto"]
+  ]);
+  var KANJI_DIGITS = /* @__PURE__ */ new Map([
+    ["\u3007", 0],
+    ["\u96F6", 0],
+    ["\u4E00", 1],
+    ["\u4E8C", 2],
+    ["\u4E09", 3],
+    ["\u56DB", 4],
+    ["\u4E94", 5],
+    ["\u516D", 6],
+    ["\u4E03", 7],
+    ["\u516B", 8],
+    ["\u4E5D", 9]
+  ]);
+  var KANJI_UNITS = /* @__PURE__ */ new Map([
+    ["\u5341", 10],
+    ["\u767E", 100],
+    ["\u5343", 1e3]
+  ]);
+  var EXACT_TRANSLATIONS = /* @__PURE__ */ new Map([
     /* Product page headings */
     ["\u4F5C\u54C1\u60C5\u5831", "Product Information"],
     ["\u4F5C\u54C1\u8A73\u7D30", "Product Details"],
@@ -669,10 +699,135 @@
     ["\u95A2\u9023\u30AD\u30FC\u30EF\u30FC\u30C9\u3067\u63A2\u3059", "Search by Related Keywords"],
     ["\u30B5\u30FC\u30AF\u30EB\u65B0\u7740\u6295\u7A3F\u753B\u50CF", "Latest Circle Posted Images"],
     ["\u30B5\u30FC\u30AF\u30EB\u65B0\u7740\u60C5\u5831", "Latest Circle News"],
-    ["\u7279\u96C6\u60C5\u5831", "Feature Information"]
+    ["\u7279\u96C6\u60C5\u5831", "Feature Information"],
+    /* Recurring event headings with stable names */
+    ["\u305D\u3046\u3055\u304F\u30DE\u30FC\u30B1\u30C3\u30C8", "Creation Market"],
+    ["\u307C\u3063\u3061\u30FB\u3056\u30FB\u304A\u3093\u308A\u30FC!", "Bocchi the Only!"],
+    ["\u30AC\u30BF\u30B1\u30C3\u30C8in\u9AD8\u7530", "Gataket in Takada"],
+    ["NIKKE \u30AF\u30EA\u30A8\u30A4\u30BF\u30FC\u30BA\u5927\u5FDC\u63F4\u796D", "NIKKE Creators Support Festival"],
+    ["\u30A4\u30D9\u30F3\u30C8\u6A2A\u65AD\u30B9\u30BF\u30F3\u30D7\u30E9\u30EA\u30FC", "Cross-Event Stamp Rally"],
+    ["\u30E1\u30ACMBFes TOKYO in\u6771\u4EAC\u6D41\u901A\u30BB\u30F3\u30BF\u30FC(TRC)", "Mega MBFes TOKYO in Tokyo Ryutsu Center (TRC)"],
+    ["Prism Garden \u2015 \u5149\u306E\u5EAD\u306B\u54B2\u304F\u3001\u3072\u3068\u3072\u3089\u306E\u60F3\u3044", "Prism Garden - A Petal Blooming in the Garden of Light"]
   ]);
+  function japaneseNumeralToNumber(value) {
+    let total = 0;
+    let current = 0;
+    for (const char of String(value || "")) {
+      if (KANJI_DIGITS.has(char)) {
+        current = current * 10 + KANJI_DIGITS.get(char);
+        continue;
+      }
+      const unit = KANJI_UNITS.get(char);
+      if (!unit) return null;
+      total += (current || 1) * unit;
+      current = 0;
+    }
+    return total + current;
+  }
+  function translateSeason(season) {
+    return SEASON_TRANSLATIONS.get(season) || season;
+  }
+  function appendSuffix(base, suffix) {
+    const trimmed = String(suffix || "").trim();
+    return trimmed ? `${base} ${trimmed}` : base;
+  }
+  var DYNAMIC_TRANSLATIONS = [
+    { pattern: /^コミックマーケット\s*(\d+)$/u, replace: (_match, number) => `Comiket ${number}` },
+    { pattern: /^コミティア\s*(\d+)$/u, replace: (_match, number) => `COMITIA ${number}` },
+    { pattern: /^関西コミティア\s*(\d+)$/u, replace: (_match, number) => `Kansai COMITIA ${number}` },
+    { pattern: /^こみっく(?:★)?トレジャー\s*(\d+)$/u, replace: (_match, number) => `Comic Treasure ${number}` },
+    {
+      pattern: /^博麗神社\s*例大祭\s*[（(]\s*第\s*(\d+)\s*回\s*[）)]$/u,
+      replace: (_match, number) => `Reitaisai ${number}`
+    },
+    {
+      pattern: /^第([〇零一二三四五六七八九十百千]+)回博麗神社例大祭$/u,
+      replace: (_match, number) => `Reitaisai ${japaneseNumeralToNumber(number)}`
+    },
+    {
+      pattern: /^博麗神社秋季例大祭\s*[（(]\s*第\s*(\d+)\s*回\s*[）)]$/u,
+      replace: (_match, number) => `Autumn Reitaisai ${number}`
+    },
+    { pattern: /^#?にじそうさく\s*(\d+)$/u, replace: (_match, number) => `#Nijisousaku ${number}` },
+    { pattern: /^せんアカ\s*(\d+)$/u, replace: (_match, number) => `Sensei no Archive ${number}` },
+    { pattern: /^せんせーのアーカイブ\s*(\d+)$/u, replace: (_match, number) => `Sensei no Archive ${number}` },
+    { pattern: /^僕らのラブライブ!\s*(\d+)$/u, replace: (_match, number) => `Bokura no Love Live! ${number}` },
+    {
+      pattern: /^歌姫庭園\s*(\d+)(.*)$/u,
+      replace: (_match, number, suffix) => appendSuffix(`Utahime Teien ${number}`, suffix)
+    },
+    { pattern: /^ふたけっと\s*(\d+)$/u, replace: (_match, number) => `Futaket ${number}` },
+    { pattern: /^けもケット\s*(\d+)$/u, replace: (_match, number) => `Kemoket ${number}` },
+    { pattern: /^新春けもケット\s*(\d+)$/u, replace: (_match, number) => `New Year Kemoket ${number}` },
+    { pattern: /^ショタフェス\s*(\d+)$/u, replace: (_match, number) => `ShotaFes ${number}` },
+    {
+      pattern: /^文学フリマ(東京|大阪|福岡|京都)\s*(\d+)$/u,
+      replace: (_match, location, number) => `Bungaku Flea Market ${LITERARY_FLEA_MARKET_LOCATIONS.get(location)} ${number}`
+    },
+    { pattern: /^おでかけライブin札幌\s*(\d+)$/u, replace: (_match, number) => `Odekake Live in Sapporo ${number}` },
+    { pattern: /^仙台コミケ\s*(\d+)$/u, replace: (_match, number) => `Sendai Comike ${number}` },
+    { pattern: /^ぷにケット\s*(\d+)$/u, replace: (_match, number) => `Puniket ${number}` },
+    /* Year, season, and date based recurring events */
+    {
+      pattern: /^スーパーヒロインタイム\s*(\d{4})\s*([春夏秋冬])$/u,
+      replace: (_match, year, season) => `Super Heroine Time ${year} ${translateSeason(season)}`
+    },
+    {
+      pattern: /^サンシャインクリエイション\s*(\d{4})\s*(Spring|Summer|Autumn|Winter)$/u,
+      replace: (_match, year, season) => `Sunshine Creation ${year} ${season}`
+    },
+    {
+      pattern: /^サンライズクリエイション京都\s*(\d{4})\s*([春夏秋冬])$/u,
+      replace: (_match, year, season) => `Sunrise Creation Kyoto ${year} ${translateSeason(season)}`
+    },
+    {
+      pattern: /^TRCオンリーライブ\s*(\d{4})(.*)$/u,
+      replace: (_match, year, suffix) => appendSuffix(`TRC Only Live ${year}`, suffix)
+    },
+    {
+      pattern: /^関西オンリーフェスタ\s*(\d{4})(.*)$/u,
+      replace: (_match, year, suffix) => appendSuffix(`Kansai Only Festa ${year}`, suffix)
+    },
+    {
+      pattern: /^コミックライブin名古屋\s*ウインタースペシャル\s*(\d{4})$/u,
+      replace: (_match, year) => `Comic Live in Nagoya Winter Special ${year}`
+    },
+    {
+      pattern: /^東方メロン\s*(\d{4})\s*([春夏秋冬])$/u,
+      replace: (_match, year, season) => `Touhou Melon ${year} ${translateSeason(season)}`
+    },
+    /* Already-English recurring event names are normalized and passed through. */
+    { pattern: /^TOKYO FES\s+(.+)$/u, replace: (_match, suffix) => `TOKYO FES ${suffix}` },
+    { pattern: /^OSAKA FES\s+(.+)$/u, replace: (_match, suffix) => `OSAKA FES ${suffix}` },
+    { pattern: /^VALENTINE ROSE FES\s+(\d{4})$/u, replace: (_match, year) => `VALENTINE ROSE FES ${year}` }
+  ];
+  var PREFIX_TRANSLATIONS = [
+    { prefix: "\u30D2\u30ED\u30A4\u30F3MIX", replacement: "Heroine MIX" },
+    { prefix: "\u93AE\u5B88\u5E9C\u30D5\u30EC\u30F3\u30C9\u30B7\u30C3\u30D7\u30FB\u30C7\u30A4", replacement: "Naval Base Friendship Day" },
+    { prefix: "\u30AA\u30EA\u30B8\u30CA\u30EB\u540C\u4EBA\u30D5\u30A7\u30B9\u30C6\u30A3\u30D0\u30EB", replacement: "Original Doujin Festival", separator: " " }
+  ];
   function normalizeText(text) {
     return String(text || "").replace(/\u00a0/g, " ").replace(/[ \t\r\n]+/g, " ").trim();
+  }
+  function translateText(text) {
+    const norm = normalizeText(text);
+    if (!norm) return text;
+    if (EXACT_TRANSLATIONS.has(norm)) {
+      return EXACT_TRANSLATIONS.get(norm);
+    }
+    for (const rule of DYNAMIC_TRANSLATIONS) {
+      const match = norm.match(rule.pattern);
+      if (match) {
+        return rule.replace(...match);
+      }
+    }
+    for (const rule of PREFIX_TRANSLATIONS) {
+      if (!norm.startsWith(rule.prefix)) continue;
+      const suffix = norm.slice(rule.prefix.length);
+      const separator = rule.separator && suffix && !/^\s/u.test(suffix) ? rule.separator : "";
+      return `${rule.replacement}${separator}${suffix}`;
+    }
+    return text;
   }
   function getTextNodes(root) {
     const nodes = [];
@@ -718,7 +873,7 @@
     if (!(element instanceof HTMLElement)) return;
     const japaneseText = normalizeText(element.textContent);
     if (!japaneseText) return;
-    const englishText = TRANSLATIONS.get(japaneseText);
+    const englishText = translateText(japaneseText);
     if (!englishText || japaneseText === englishText) return;
     replaceTextPreservingStructure(element, englishText);
     element.dataset.melonbooksHeadingTranslatorOriginal = japaneseText;
