@@ -23,6 +23,7 @@ function generateUserscriptBanner(info) {
     '// @match        https://melonbooks.co.jp/*',
     '// @match        http://www.melonbooks.co.jp/mypage/history.php*',
     '// @grant        GM_addStyle',
+    '// @grant        GM_registerMenuCommand',
     '// @run-at       document-start',
     '// @updateURL    https://raw.githubusercontent.com/Netoxique/Melonbooks-Enhanced/main/dist/Melonbooks%20-%20Enhancements.user.js',
     '// @downloadURL  https://raw.githubusercontent.com/Netoxique/Melonbooks-Enhanced/main/dist/Melonbooks%20-%20Enhancements.user.js',

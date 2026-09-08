@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS = {
   modules: {
     'force-detail-thumbnails': true,
     'cart-duplicate-warning': true,
-    'heading-translator': true,
+    'heading-translator': false,
     'product-info-layout': true,
     'search-columns': true,
     'force-listing-images': true,
