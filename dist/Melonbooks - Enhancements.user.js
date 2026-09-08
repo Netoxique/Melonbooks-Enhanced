@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxique/Melonbooks-Enhanced
-// @version      1.3.0
+// @version      1.3.1
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxique
 // @match        https://*.melonbooks.co.jp/*
 // @match        https://melonbooks.co.jp/*
 // @match        http://www.melonbooks.co.jp/mypage/history.php*
 // @grant        GM_addStyle
+// @grant        GM_registerMenuCommand
 // @run-at       document-start
 // @updateURL    https://raw.githubusercontent.com/Netoxique/Melonbooks-Enhanced/main/dist/Melonbooks%20-%20Enhancements.user.js
 // @downloadURL  https://raw.githubusercontent.com/Netoxique/Melonbooks-Enhanced/main/dist/Melonbooks%20-%20Enhancements.user.js
@@ -26,7 +27,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxique/Melonbooks-Enhanced");
-  __publicField(ScriptInfo, "version", "1.3.0");
+  __publicField(ScriptInfo, "version", "1.3.1");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxique");
 
@@ -90,7 +91,7 @@
     modules: {
       "force-detail-thumbnails": true,
       "cart-duplicate-warning": true,
-      "heading-translator": true,
+      "heading-translator": false,
       "product-info-layout": true,
       "search-columns": true,
       "force-listing-images": true,
@@ -4811,10 +4812,24 @@
     FavoriteAuthorsInfiniteScrollModule,
     WishlistInfiniteScrollModule
   ];
+  function registerMenuCommands() {
+    if (typeof GM_registerMenuCommand !== "function") {
+      Logger.debug("GM_registerMenuCommand is unavailable; userscript menu commands were not registered.");
+      return;
+    }
+    const moduleId = HeadingTranslatorModule.id;
+    const enabled = Settings.isModuleEnabled(moduleId);
+    const action = enabled ? "Disable" : "Enable";
+    GM_registerMenuCommand(`${action} English Heading Translator`, () => {
+      Settings.setModuleEnabled(moduleId, !enabled);
+      window.location.reload();
+    });
+  }
   function bootstrap() {
     const context = createExecutionContext();
     const isDebug = Settings.isDebugEnabled();
     Logger.setDebug(isDebug);
+    registerMenuCommands();
     Logger.debug(`Initializing Melonbooks Enhanced v${ScriptInfo.version} on route: ${context.route}`);
     for (const mod of modules) {
       if (!Settings.isModuleEnabled(mod.id)) {
