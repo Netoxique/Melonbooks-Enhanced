@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Melonbooks - Enhancements
 // @namespace    https://github.com/Netoxique/Melonbooks-Enhanced
-// @version      1.2.0
+// @version      1.3.0
 // @description  Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.
 // @author       Netoxique
 // @match        https://*.melonbooks.co.jp/*
@@ -26,7 +26,7 @@
   };
   __publicField(ScriptInfo, "name", "Melonbooks - Enhancements");
   __publicField(ScriptInfo, "namespace", "https://github.com/Netoxique/Melonbooks-Enhanced");
-  __publicField(ScriptInfo, "version", "1.2.0");
+  __publicField(ScriptInfo, "version", "1.3.0");
   __publicField(ScriptInfo, "description", "Comprehensive enhancements for Melonbooks browsing, shopping, layout, and library management.");
   __publicField(ScriptInfo, "author", "Netoxique");
 
@@ -2925,6 +2925,110 @@
     }
   };
 
+  // src/modules/order-status-colors.js
+  var STATUS_TONES = /* @__PURE__ */ new Map([
+    ["\u3054\u4E88\u7D04", "reserved"],
+    ["\u51FA\u8377\u6E96\u5099\u3092\u958B\u59CB\u3057\u307E\u3057\u305F", "preparing"],
+    ["\u767A\u9001\u304C\u5B8C\u4E86\u3057\u307E\u3057\u305F", "shipped"],
+    ["\u53D7\u53D6\u6E08\u307F", "received"]
+  ]);
+  var STATUS_CSS = `
+  tr[data-mb-order-status-tone] > th,
+  tr[data-mb-order-status-tone] > td.status {
+    font-weight: 700 !important;
+  }
+
+  tr[data-mb-order-status-tone] > td.status * {
+    color: inherit !important;
+    font-weight: inherit !important;
+  }
+
+  tr[data-mb-order-status-tone="reserved"] > th,
+  tr[data-mb-order-status-tone="reserved"] > td.status {
+    background-color: #ff9800 !important;
+    color: #000000 !important;
+  }
+
+  tr[data-mb-order-status-tone="preparing"] > th,
+  tr[data-mb-order-status-tone="preparing"] > td.status {
+    background-color: #ffeb3b !important;
+    color: #000000 !important;
+  }
+
+  tr[data-mb-order-status-tone="shipped"] > th,
+  tr[data-mb-order-status-tone="shipped"] > td.status {
+    background-color: #2196f3 !important;
+    color: #ffffff !important;
+  }
+
+  tr[data-mb-order-status-tone="received"] > th,
+  tr[data-mb-order-status-tone="received"] > td.status {
+    background-color: #4caf50 !important;
+    color: #000000 !important;
+  }
+
+  tr[data-mb-order-status-tone="other"] > th,
+  tr[data-mb-order-status-tone="other"] > td.status {
+    background-color: #f44336 !important;
+    color: #ffffff !important;
+  }
+`;
+  function normalizeOrderStatusText(text) {
+    return String(text ?? "").replace(/\s+/g, "").trim();
+  }
+  function getOrderStatusTone(text) {
+    const status = normalizeOrderStatusText(text);
+    if (!status) return null;
+    return STATUS_TONES.get(status) || "other";
+  }
+  function processStatusRow(row) {
+    if (!row?.matches?.("tr")) return;
+    const heading = row.querySelector(":scope > th");
+    const statusCell = row.querySelector(":scope > td.status");
+    if (!heading || !statusCell) return;
+    if (normalizeOrderStatusText(heading.textContent) !== "\u6CE8\u6587\u72B6\u6CC1") return;
+    const tone = getOrderStatusTone(statusCell.textContent);
+    if (!tone) {
+      delete row.dataset.mbOrderStatusTone;
+      return;
+    }
+    row.dataset.mbOrderStatusTone = tone;
+  }
+  function processStatuses(root = document) {
+    if (root?.matches?.("tr")) {
+      processStatusRow(root);
+    }
+    root?.querySelectorAll?.("tr").forEach(processStatusRow);
+  }
+  var OrderStatusColorsModule = {
+    id: "order-status-colors",
+    name: "Order Status Colors",
+    lifecycle: "document-start",
+    matches(context) {
+      return context.route === "melonbooks-orders" || context.location.pathname.includes("history.php");
+    },
+    init() {
+      injectStyle("order-status-colors", STATUS_CSS);
+      processStatuses();
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          const targetRow = mutation.target?.parentElement?.closest?.("tr") || mutation.target?.closest?.("tr");
+          if (targetRow) processStatusRow(targetRow);
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              processStatuses(node);
+            }
+          }
+        }
+      });
+      observer.observe(document, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
+  };
+
   // src/modules/favorite-circle-toggle.js
   var TARGET_SELECTOR = "a.favorite_circle_short, a.favorite_circle";
   var BUSY_CLASS = "mb-circle-favorite-toggle-busy";
@@ -4700,6 +4804,7 @@
     ForceListingImagesModule,
     ListingHoverModule,
     OrdersGridInfiniteScrollModule,
+    OrderStatusColorsModule,
     FavoriteCircleToggleModule,
     FavoriteAuthorToggleModule,
     WishlistToggleModule,
