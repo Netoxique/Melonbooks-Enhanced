@@ -473,17 +473,20 @@ const LISTING_HOVER_CSS = `
     justify-content: stretch;
   }
 
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row a.to_cart,
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row a.to_request.resale_request {
+  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row button.mb-hover-action-proxy {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
     min-height: 26px;
     padding: 4px 8px;
+    border: 0;
     border-radius: 0 !important;
+    appearance: none;
     background: #FFBB41 !important;
     color: #fff !important;
+    cursor: pointer;
+    font-family: inherit;
     font-size: 12px;
     font-weight: 700;
     line-height: 1.2;
@@ -491,22 +494,20 @@ const LISTING_HOVER_CSS = `
     white-space: nowrap;
   }
 
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row.mb-hover-action-row-no-price a.to_cart,
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row.mb-hover-action-row-no-price a.to_request.resale_request {
+  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row.mb-hover-action-row-no-price button.mb-hover-action-proxy {
     flex: 1 1 100%;
     width: 100%;
   }
 
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row a.to_cart.reserve {
+  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row button.mb-hover-action-proxy.reserve {
     background: #11C3CC !important;
   }
 
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row a.to_request.resale_request {
+  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row button.mb-hover-action-proxy.mb-hover-resale-proxy {
     background: #d9534f !important;
   }
 
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row a.to_cart i,
-  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row a.to_request.resale_request i {
+  .item-list li[${PROCESSED_ATTR}="1"] > .mb-hover-action-row button.mb-hover-action-proxy i {
     margin-right: 4px;
   }
 
@@ -695,7 +696,34 @@ function moveImageStateBadges(item, thumbnail) {
   }
 }
 
-function buildActionRow(meta) {
+/**
+ * Keep the site's cart/reservation handler attached to the original link.
+ * Moving the link out of .search-item-detail-btn-list breaks Melonbooks'
+ * click handling and makes the fallback href open the product page.
+ */
+export function createListingActionProxy(originalAction) {
+  const proxy = document.createElement('button');
+  proxy.type = 'button';
+  proxy.className = 'mb-hover-action-proxy';
+
+  if (originalAction.classList.contains('reserve')) {
+    proxy.classList.add('reserve');
+  }
+  if (originalAction.classList.contains('resale_request')) {
+    proxy.classList.add('mb-hover-resale-proxy');
+  }
+
+  proxy.innerHTML = originalAction.innerHTML;
+  proxy.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    originalAction.click();
+  });
+
+  return proxy;
+}
+
+export function buildActionRow(meta) {
   const price = meta.querySelector(':scope > .item-price') || meta.querySelector('.item-price');
   const priceHasText = hasVisibleText(price);
 
@@ -722,7 +750,7 @@ function buildActionRow(meta) {
     buttonWrap.className = 'mb-hover-cart-buttons';
 
     actionButtons.forEach((button) => {
-      buttonWrap.appendChild(button);
+      buttonWrap.appendChild(createListingActionProxy(button));
     });
 
     row.appendChild(buttonWrap);
