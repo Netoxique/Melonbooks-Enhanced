@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.1] - 2026-11-07
+
+### Fixed
+- **Listing Hover** now keeps the original cart/preorder links in Melonbooks' native action container so its JavaScript cart handlers can still intercept clicks. Visible proxy buttons forward clicks to the originals instead of navigating to product pages.
+- Preserve the original resale request action and its click handling in listing rows.
+
+---
+
 ## [1.4.0] - 2026-09-08
 
 ### Added
